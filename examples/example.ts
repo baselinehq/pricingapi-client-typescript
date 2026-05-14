@@ -33,7 +33,7 @@ async function main(): Promise<void> {
     "operating_system": "linux",
     "service": "Droplet",
     "availability_zone": "",
-    "use_base_pricing": true,
+    "fallback_to_base_pricing": true,
     vm,
   };
 
