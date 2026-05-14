@@ -1,9 +1,10 @@
-import {
-  Configuration,
-  DefaultApi,
+import { DefaultApi } from '../api';
+import { Configuration } from '../configuration';
+import axios from 'axios';
+import type {
   GithubComBaselinehqGolangSharedTypesInstance,
   GithubComBaselinehqGolangSharedTypesVM,
-} from '../';
+} from '../api';
 
 async function main(): Promise<void> {
   const token = process.env.BASELINEHQ_CLOUD_API_KEY;
@@ -14,29 +15,42 @@ async function main(): Promise<void> {
   // Example SDK configuration for TypeScript generators.
   const config = new Configuration({
     basePath: 'https://pricing.baselinehq.cloud',
-    accessToken: token,
+    apiKey: (name: string) => (name === 'X-API-Key' ? token : undefined),
   });
 
   const api = new DefaultApi(config);
 
-  const vm = new GithubComBaselinehqGolangSharedTypesVM();
-  vm.cpuCores = 2;
-  vm.ramGb = 2;
+  const vm: GithubComBaselinehqGolangSharedTypesVM = {
+    cpu_cores: 2,
+    ram_gb: 2,
+  };
 
-  const instance = new GithubComBaselinehqGolangSharedTypesInstance();
-  instance.instanceType = 's-2vcpu-2gb';
-  instance.usageType = 'ONDEMAND';
-  instance.provider = 'DigitalOcean';
-  instance.operatingSystem = 'linux';
-  instance.service = 'Droplet';
-  instance.region = 'nyc1';
-  instance.vm = vm;
+  const instance: GithubComBaselinehqGolangSharedTypesInstance = {
+    "region": "nyc1",
+    "instance_type": "s-2vcpu-2gb",
+    "usage_type": "ONDEMAND",
+    "provider": "DigitalOcean",
+    "operating_system": "linux",
+    "service": "Droplet",
+    "availability_zone": "",
+    "use_base_pricing": true,
+    vm,
+  };
 
   const pricing = await api.pricingComputePost({ instance });
   console.log(JSON.stringify(pricing.data, null, 2));
 }
 
 main().catch((error) => {
-  console.error('Pricing API TypeScript example failed:', error);
+  if (axios.isAxiosError(error)) {
+    console.error('Pricing API request failed', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      endpoint: error.config?.url,
+    });
+  } else {
+    console.error('Pricing API TypeScript example failed:', error);
+  }
   process.exit(1);
 });
