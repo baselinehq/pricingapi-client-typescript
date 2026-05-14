@@ -28,7 +28,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { SchemaComputePricingsRow } from '@baselinehq/pricing-api-client';
+import { SchemaComputePricingsRow } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: SchemaComputePricingsRow = {
     architecture,

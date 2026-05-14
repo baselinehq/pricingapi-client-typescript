@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { TypesMarketplaceDiskProvidersResponse } from '@baselinehq/pricing-api-client';
+import { TypesMarketplaceDiskProvidersResponse } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: TypesMarketplaceDiskProvidersResponse = {
     providers,

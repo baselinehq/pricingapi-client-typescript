@@ -19,7 +19,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { GithubComBaselinehqGolangSharedTypesInstance } from '@baselinehq/pricing-api-client';
+import { GithubComBaselinehqGolangSharedTypesInstance } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: GithubComBaselinehqGolangSharedTypesInstance = {
     availability_zone,

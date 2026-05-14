@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { GithubComBaselinehqGolangSharedTypesVM } from '@baselinehq/pricing-api-client';
+import { GithubComBaselinehqGolangSharedTypesVM } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: GithubComBaselinehqGolangSharedTypesVM = {
     cpu_cores,

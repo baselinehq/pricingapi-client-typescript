@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { TypesCustomPriceRequest } from '@baselinehq/pricing-api-client';
+import { TypesCustomPriceRequest } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: TypesCustomPriceRequest = {
     entries,

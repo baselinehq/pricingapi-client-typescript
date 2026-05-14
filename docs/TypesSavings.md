@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { TypesSavings } from '@baselinehq/pricing-api-client';
+import { TypesSavings } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: TypesSavings = {
     amount_per_hour,

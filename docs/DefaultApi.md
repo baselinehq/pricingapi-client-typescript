@@ -30,7 +30,7 @@ Health check endpoint
 import {
     DefaultApi,
     Configuration
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -74,7 +74,7 @@ Delete a custom provider instance
 import {
     DefaultApi,
     Configuration
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -129,7 +129,7 @@ Get your custom pricing entries
 import {
     DefaultApi,
     Configuration
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -176,7 +176,7 @@ import {
     DefaultApi,
     Configuration,
     TypesCustomPriceRequest
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -230,7 +230,7 @@ Delete a custom disk provider entry
 import {
     DefaultApi,
     Configuration
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -285,7 +285,7 @@ Get your custom disk pricing entries
 import {
     DefaultApi,
     Configuration
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -332,7 +332,7 @@ import {
     DefaultApi,
     Configuration,
     TypesCustomDiskPriceRequest
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -387,7 +387,7 @@ import {
     DefaultApi,
     Configuration,
     GithubComBaselinehqGolangSharedTypesInstance
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -443,7 +443,7 @@ import {
     DefaultApi,
     Configuration,
     TypesDisk
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -499,7 +499,7 @@ import {
     DefaultApi,
     Configuration,
     GithubComBaselinehqGolangSharedTypesInstance
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -554,7 +554,7 @@ Get details for the providers
 import {
     DefaultApi,
     Configuration
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -600,7 +600,7 @@ import {
     DefaultApi,
     Configuration,
     TypesComputeRequest
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -656,7 +656,7 @@ import {
     DefaultApi,
     Configuration,
     TypesDiskRequest
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
@@ -712,7 +712,7 @@ import {
     DefaultApi,
     Configuration,
     TypesComputeRequest
-} from '@baselinehq/pricing-api-client';
+} from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
