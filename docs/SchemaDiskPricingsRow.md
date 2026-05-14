@@ -30,7 +30,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { SchemaDiskPricingsRow } from '@baselinehq/pricing-api-client';
+import { SchemaDiskPricingsRow } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: SchemaDiskPricingsRow = {
     availability_zone,

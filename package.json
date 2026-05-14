@@ -1,7 +1,7 @@
 {
-  "name": "@baselinehq/pricing-api-client",
+  "name": "@baselinehq/pricingapi-client-typescript",
   "version": "0.1.0",
-  "description": "OpenAPI client for @baselinehq/pricing-api-client",
+  "description": "OpenAPI client for @baselinehq/pricingapi-client-typescript",
   "author": "OpenAPI-Generator Contributors",
   "repository": {
     "type": "git",
@@ -12,7 +12,7 @@
     "typescript",
     "openapi-client",
     "openapi-generator",
-    "@baselinehq/pricing-api-client"
+    "@baselinehq/pricingapi-client-typescript"
   ],
   "license": "Unlicense",
   "main": "./dist/index.js",

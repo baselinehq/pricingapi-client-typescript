@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { TypesCustomPricingResponse } from '@baselinehq/pricing-api-client';
+import { TypesCustomPricingResponse } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: TypesCustomPricingResponse = {
     entries,

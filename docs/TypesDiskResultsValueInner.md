@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { TypesDiskResultsValueInner } from '@baselinehq/pricing-api-client';
+import { TypesDiskResultsValueInner } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: TypesDiskResultsValueInner = {
     disk,

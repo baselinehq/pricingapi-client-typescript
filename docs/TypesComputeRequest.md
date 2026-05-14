@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { TypesComputeRequest } from '@baselinehq/pricing-api-client';
+import { TypesComputeRequest } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: TypesComputeRequest = {
     include_metadata,

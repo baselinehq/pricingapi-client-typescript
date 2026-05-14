@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { TypesComputeResultsValueInner } from '@baselinehq/pricing-api-client';
+import { TypesComputeResultsValueInner } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: TypesComputeResultsValueInner = {
     instance_pricing,

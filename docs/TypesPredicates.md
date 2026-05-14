@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { TypesPredicates } from '@baselinehq/pricing-api-client';
+import { TypesPredicates } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: TypesPredicates = {
     availability_zones,

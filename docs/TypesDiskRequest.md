@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { TypesDiskRequest } from '@baselinehq/pricing-api-client';
+import { TypesDiskRequest } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: TypesDiskRequest = {
     include_metadata,

@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { HandlerErrorResponse } from '@baselinehq/pricing-api-client';
+import { HandlerErrorResponse } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: HandlerErrorResponse = {
     error,

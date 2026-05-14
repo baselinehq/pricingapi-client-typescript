@@ -20,7 +20,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { TypesDisk } from '@baselinehq/pricing-api-client';
+import { TypesDisk } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: TypesDisk = {
     availability_zone,

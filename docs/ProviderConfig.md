@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { ProviderConfig } from '@baselinehq/pricing-api-client';
+import { ProviderConfig } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: ProviderConfig = {
     predicates,
