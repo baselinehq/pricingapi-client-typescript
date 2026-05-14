@@ -1,0 +1,87 @@
+name: Publish
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to tag, for example 0.1.1 or v0.1.1"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    name: Version Tag And Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Node Package Registry
+        uses: actions/setup-node@v4
+        with:
+          registry-url: https://npm.pkg.github.com
+          scope: "@baselinehq"
+
+      - name: Bump package version
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          version="${VERSION_INPUT#v}"
+          if ! node -e "const semver = process.argv[1]; if (!/^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$/.test(semver)) process.exit(1)" "${version}"; then
+            echo "Version must be a concrete semver version such as 0.1.1 or v0.1.1."
+            exit 1
+          fi
+
+          npm pkg set "version=${version}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if ! git diff --quiet -- package.json; then
+            git add package.json
+            git commit -m "chore: release ts-shared v${version}"
+          fi
+
+          if git rev-parse "v${version}" >/dev/null 2>&1; then
+            echo "Tag v${version} already exists."
+          else
+            git tag "v${version}"
+          fi
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify release tag
+        run: |
+          package_version="$(bun -p "require('./package.json').version")"
+          expected_tag="v${package_version}"
+
+          if [ "${GITHUB_EVENT_NAME}" = "release" ] && [ "${GITHUB_REF_NAME}" != "${expected_tag}" ]; then
+            echo "Release tag ${GITHUB_REF_NAME} does not match package.json version ${package_version}."
+            exit 1
+          fi
+
+      - name: Push version tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          package_version="$(bun -p "require('./package.json').version")"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "v${package_version}"
+
+      - name: Publish package
+        run: npm publish --registry=https://npm.pkg.github.com --access restricted
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
