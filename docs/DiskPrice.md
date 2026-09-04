@@ -1,4 +1,4 @@
-# SchemaDiskPricingsRow
+# DiskPrice
 
 
 ## Properties
@@ -10,6 +10,7 @@ Name | Type | Description | Notes
 **cost_per_iops_hour** | **number** |  | [optional] [default to undefined]
 **cost_per_throughput_mbps_hour** | **number** |  | [optional] [default to undefined]
 **created_at** | **string** |  | [optional] [default to undefined]
+**currency** | **string** |  | [optional] [default to undefined]
 **id** | **string** |  | [optional] [default to undefined]
 **max_capacity_gb** | **number** |  | [optional] [default to undefined]
 **max_iops** | **number** |  | [optional] [default to undefined]
@@ -17,6 +18,9 @@ Name | Type | Description | Notes
 **min_capacity_gb** | **number** |  | [optional] [default to undefined]
 **min_iops** | **number** |  | [optional] [default to undefined]
 **min_throughput_mbps** | **number** |  | [optional] [default to undefined]
+**native_cost_per_gb_hour** | **number** |  | [optional] [default to undefined]
+**native_cost_per_iops_hour** | **number** |  | [optional] [default to undefined]
+**native_cost_per_throughput_mbps_hour** | **number** |  | [optional] [default to undefined]
 **period_billing_hours** | **number** |  | [optional] [default to undefined]
 **provider** | **string** |  | [optional] [default to undefined]
 **raw_pricing_data** | **object** |  | [optional] [default to undefined]
@@ -30,14 +34,15 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { SchemaDiskPricingsRow } from '@baselinehq/pricingapi-client-typescript';
+import { DiskPrice } from '@baselinehq/pricingapi-client-typescript';
 
-const instance: SchemaDiskPricingsRow = {
+const instance: DiskPrice = {
     availability_zone,
     cost_per_gb_hour,
     cost_per_iops_hour,
     cost_per_throughput_mbps_hour,
     created_at,
+    currency,
     id,
     max_capacity_gb,
     max_iops,
@@ -45,6 +50,9 @@ const instance: SchemaDiskPricingsRow = {
     min_capacity_gb,
     min_iops,
     min_throughput_mbps,
+    native_cost_per_gb_hour,
+    native_cost_per_iops_hour,
+    native_cost_per_throughput_mbps_hour,
     period_billing_hours,
     provider,
     raw_pricing_data,

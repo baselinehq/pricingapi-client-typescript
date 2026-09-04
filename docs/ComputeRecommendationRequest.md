@@ -1,4 +1,4 @@
-# TypesComputeRequest
+# ComputeRecommendationRequest
 
 
 ## Properties
@@ -13,9 +13,9 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { TypesComputeRequest } from '@baselinehq/pricingapi-client-typescript';
+import { ComputeRecommendationRequest } from '@baselinehq/pricingapi-client-typescript';
 
-const instance: TypesComputeRequest = {
+const instance: ComputeRecommendationRequest = {
     include_metadata,
     instance,
     predicates,

@@ -1,22 +1,20 @@
-# TypesDiskResultsValueInner
+# DiskRecommendation
 
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**disk** | [**SchemaDiskPricingsRow**](SchemaDiskPricingsRow.md) |  | [optional] [default to undefined]
-**disk_pricing** | [**SchemaDiskPricingsRow**](SchemaDiskPricingsRow.md) |  | [optional] [default to undefined]
+**pricing** | [**DiskPrice**](DiskPrice.md) |  | [optional] [default to undefined]
 **savings** | [**TypesSavings**](TypesSavings.md) |  | [optional] [default to undefined]
 
 ## Example
 
 ```typescript
-import { TypesDiskResultsValueInner } from '@baselinehq/pricingapi-client-typescript';
+import { DiskRecommendation } from '@baselinehq/pricingapi-client-typescript';
 
-const instance: TypesDiskResultsValueInner = {
-    disk,
-    disk_pricing,
+const instance: DiskRecommendation = {
+    pricing,
     savings,
 };
 ```

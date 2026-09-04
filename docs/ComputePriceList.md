@@ -1,18 +1,18 @@
-# TypesMarketplaceDiskProvidersResponse
+# ComputePriceList
 
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**providers** | [**Array&lt;SchemaDiskPricingsRow&gt;**](SchemaDiskPricingsRow.md) |  | [optional] [default to undefined]
+**providers** | [**Array&lt;ComputePrice&gt;**](ComputePrice.md) |  | [optional] [default to undefined]
 
 ## Example
 
 ```typescript
-import { TypesMarketplaceDiskProvidersResponse } from '@baselinehq/pricingapi-client-typescript';
+import { ComputePriceList } from '@baselinehq/pricingapi-client-typescript';
 
-const instance: TypesMarketplaceDiskProvidersResponse = {
+const instance: ComputePriceList = {
     providers,
 };
 ```

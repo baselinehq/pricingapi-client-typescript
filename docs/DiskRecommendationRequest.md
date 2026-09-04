@@ -1,4 +1,4 @@
-# TypesDiskRequest
+# DiskRecommendationRequest
 
 
 ## Properties
@@ -13,9 +13,9 @@ Name | Type | Description | Notes
 ## Example
 
 ```typescript
-import { TypesDiskRequest } from '@baselinehq/pricingapi-client-typescript';
+import { DiskRecommendationRequest } from '@baselinehq/pricingapi-client-typescript';
 
-const instance: TypesDiskRequest = {
+const instance: DiskRecommendationRequest = {
     include_metadata,
     instance,
     predicates,
