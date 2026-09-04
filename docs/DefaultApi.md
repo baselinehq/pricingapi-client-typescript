@@ -8,9 +8,15 @@ All URIs are relative to *https://pricing.baselinehq.cloud*
 |[**marketplaceProvidersComputeDelete**](#marketplaceproviderscomputedelete) | **DELETE** /marketplace/providers/compute | Delete a custom provider instance|
 |[**marketplaceProvidersComputeGet**](#marketplaceproviderscomputeget) | **GET** /marketplace/providers/compute | Get your custom pricing entries|
 |[**marketplaceProvidersComputePost**](#marketplaceproviderscomputepost) | **POST** /marketplace/providers/compute | Register a custom provider|
+|[**marketplaceProvidersDatabasesDelete**](#marketplaceprovidersdatabasesdelete) | **DELETE** /marketplace/providers/databases | Delete a custom database pricing entry|
+|[**marketplaceProvidersDatabasesGet**](#marketplaceprovidersdatabasesget) | **GET** /marketplace/providers/databases | Get your custom database pricing entries|
+|[**marketplaceProvidersDatabasesPost**](#marketplaceprovidersdatabasespost) | **POST** /marketplace/providers/databases | Register custom database pricing|
 |[**marketplaceProvidersDisksDelete**](#marketplaceprovidersdisksdelete) | **DELETE** /marketplace/providers/disks | Delete a custom disk provider entry|
 |[**marketplaceProvidersDisksGet**](#marketplaceprovidersdisksget) | **GET** /marketplace/providers/disks | Get your custom disk pricing entries|
 |[**marketplaceProvidersDisksPost**](#marketplaceprovidersdiskspost) | **POST** /marketplace/providers/disks | Register a custom disk provider|
+|[**marketplaceProvidersModelsDelete**](#marketplaceprovidersmodelsdelete) | **DELETE** /marketplace/providers/models | Delete a custom model pricing entry|
+|[**marketplaceProvidersModelsGet**](#marketplaceprovidersmodelsget) | **GET** /marketplace/providers/models | Get your custom model pricing entries|
+|[**marketplaceProvidersModelsPost**](#marketplaceprovidersmodelspost) | **POST** /marketplace/providers/models | Register custom model pricing|
 |[**pricingComputePost**](#pricingcomputepost) | **POST** /pricing/compute | Get pricing for an instance|
 |[**pricingDisksPost**](#pricingdiskspost) | **POST** /pricing/disks | Get pricing for a disk|
 |[**pricingPost**](#pricingpost) | **POST** /pricing | Get pricing for an instance|
@@ -22,7 +28,7 @@ All URIs are relative to *https://pricing.baselinehq.cloud*
 # **healthzGet**
 > { [key: string]: string; } healthzGet()
 
-Health check endpoint
+Health check endpoint Superseded by GET /v1/healthz.
 
 ### Example
 
@@ -64,9 +70,9 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **marketplaceProvidersComputeDelete**
-> TypesCustomPricingResponse marketplaceProvidersComputeDelete()
+> RegisteredComputePrices marketplaceProvidersComputeDelete()
 
-Delete a custom provider instance
+Delete one of your compute rates by id. A rate a resource is already priced against cannot be deleted; the request fails while that link exists, so re-pin those resources first. Once it is gone, a resource still carrying its id stops resolving a price rather than falling back to attribute matching. Superseded by DELETE /v1/marketplace/compute/{id}, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -95,7 +101,7 @@ const { status, data } = await apiInstance.marketplaceProvidersComputeDelete(
 
 ### Return type
 
-**TypesCustomPricingResponse**
+**RegisteredComputePrices**
 
 ### Authorization
 
@@ -119,9 +125,9 @@ const { status, data } = await apiInstance.marketplaceProvidersComputeDelete(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **marketplaceProvidersComputeGet**
-> TypesMarketplaceProvidersResponse marketplaceProvidersComputeGet()
+> ComputePriceList marketplaceProvidersComputeGet()
 
-Get your custom pricing entries
+List the compute rates your organization has registered. Only your own rates are returned, never another organization\'s. Filters combine, and paging is by limit and offset. Superseded by GET /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -134,16 +140,38 @@ import {
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
-const { status, data } = await apiInstance.marketplaceProvidersComputeGet();
+let limit: number; //Maximum entries to return (default 500) (optional) (default to undefined)
+let offset: number; //Entries to skip (optional) (default to undefined)
+let service: string; //Filter by service (optional) (default to undefined)
+let region: string; //Filter by region (optional) (default to undefined)
+let instanceType: string; //Filter by instance type (optional) (default to undefined)
+let usageType: string; //Filter by usage type (optional) (default to undefined)
+
+const { status, data } = await apiInstance.marketplaceProvidersComputeGet(
+    limit,
+    offset,
+    service,
+    region,
+    instanceType,
+    usageType
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **limit** | [**number**] | Maximum entries to return (default 500) | (optional) defaults to undefined|
+| **offset** | [**number**] | Entries to skip | (optional) defaults to undefined|
+| **service** | [**string**] | Filter by service | (optional) defaults to undefined|
+| **region** | [**string**] | Filter by region | (optional) defaults to undefined|
+| **instanceType** | [**string**] | Filter by instance type | (optional) defaults to undefined|
+| **usageType** | [**string**] | Filter by usage type | (optional) defaults to undefined|
 
 
 ### Return type
 
-**TypesMarketplaceProvidersResponse**
+**ComputePriceList**
 
 ### Authorization
 
@@ -159,15 +187,16 @@ This endpoint does not have any parameters.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Pricing response for custom pricing |  -  |
+|**400** | Invalid limit or offset |  -  |
 |**401** | Unauthorized |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **marketplaceProvidersComputePost**
-> TypesCustomPricingResponse marketplaceProvidersComputePost(instance)
+> RegisteredComputePrices marketplaceProvidersComputePost(instance)
 
-Register a custom provider
+Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -175,13 +204,13 @@ Register a custom provider
 import {
     DefaultApi,
     Configuration,
-    TypesCustomPriceRequest
+    ComputePricesRequest
 } from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
-let instance: TypesCustomPriceRequest; //Custom pricing request
+let instance: ComputePricesRequest; //Custom pricing request
 
 const { status, data } = await apiInstance.marketplaceProvidersComputePost(
     instance
@@ -192,12 +221,12 @@ const { status, data } = await apiInstance.marketplaceProvidersComputePost(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **instance** | **TypesCustomPriceRequest**| Custom pricing request | |
+| **instance** | **ComputePricesRequest**| Custom pricing request | |
 
 
 ### Return type
 
-**TypesCustomPricingResponse**
+**RegisteredComputePrices**
 
 ### Authorization
 
@@ -219,10 +248,195 @@ const { status, data } = await apiInstance.marketplaceProvidersComputePost(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **marketplaceProvidersDisksDelete**
-> TypesCustomDiskPricingResponse marketplaceProvidersDisksDelete()
+# **marketplaceProvidersDatabasesDelete**
+> RegisteredDatabasePrices marketplaceProvidersDatabasesDelete()
 
-Delete a custom disk provider entry
+Delete one of your managed database rates by id. A rate a database or one of its reports still references cannot be deleted; the request fails while that reference exists, so re-pin first. Once it is gone, a database still carrying its id stops resolving a price. Superseded by DELETE /v1/marketplace/databases/{id}, which returns RFC 9457 problem responses on failure.
+
+### Example
+
+```typescript
+import {
+    DefaultApi,
+    Configuration
+} from '@baselinehq/pricingapi-client-typescript';
+
+const configuration = new Configuration();
+const apiInstance = new DefaultApi(configuration);
+
+let id: string; //Database pricing ID (default to undefined)
+
+const { status, data } = await apiInstance.marketplaceProvidersDatabasesDelete(
+    id
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **id** | [**string**] | Database pricing ID | defaults to undefined|
+
+
+### Return type
+
+**RegisteredDatabasePrices**
+
+### Authorization
+
+[ApiKeyAuth](../README.md#ApiKeyAuth), [BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Pricing response for custom database pricing |  -  |
+|**400** | Invalid id |  -  |
+|**401** | Provider and organization do not match |  -  |
+|**404** | Database pricing entry not found |  -  |
+|**500** | Internal server error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **marketplaceProvidersDatabasesGet**
+> DatabasePriceList marketplaceProvidersDatabasesGet()
+
+List the managed database rates your organization has registered. Only your own rates are returned. Filters combine, and paging is by limit and offset. Superseded by GET /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
+
+### Example
+
+```typescript
+import {
+    DefaultApi,
+    Configuration
+} from '@baselinehq/pricingapi-client-typescript';
+
+const configuration = new Configuration();
+const apiInstance = new DefaultApi(configuration);
+
+let limit: number; //Maximum entries to return (default 500) (optional) (default to undefined)
+let offset: number; //Entries to skip (optional) (default to undefined)
+let service: string; //Filter by service (optional) (default to undefined)
+let region: string; //Filter by region (optional) (default to undefined)
+let engine: string; //Filter by engine (optional) (default to undefined)
+let edition: string; //Filter by edition (optional) (default to undefined)
+let instanceType: string; //Filter by instance type (optional) (default to undefined)
+let usageType: string; //Filter by usage type (optional) (default to undefined)
+
+const { status, data } = await apiInstance.marketplaceProvidersDatabasesGet(
+    limit,
+    offset,
+    service,
+    region,
+    engine,
+    edition,
+    instanceType,
+    usageType
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **limit** | [**number**] | Maximum entries to return (default 500) | (optional) defaults to undefined|
+| **offset** | [**number**] | Entries to skip | (optional) defaults to undefined|
+| **service** | [**string**] | Filter by service | (optional) defaults to undefined|
+| **region** | [**string**] | Filter by region | (optional) defaults to undefined|
+| **engine** | [**string**] | Filter by engine | (optional) defaults to undefined|
+| **edition** | [**string**] | Filter by edition | (optional) defaults to undefined|
+| **instanceType** | [**string**] | Filter by instance type | (optional) defaults to undefined|
+| **usageType** | [**string**] | Filter by usage type | (optional) defaults to undefined|
+
+
+### Return type
+
+**DatabasePriceList**
+
+### Authorization
+
+[ApiKeyAuth](../README.md#ApiKeyAuth), [BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Pricing response for custom database pricing |  -  |
+|**400** | Invalid limit or offset |  -  |
+|**401** | Unauthorized |  -  |
+|**500** | Internal server error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **marketplaceProvidersDatabasesPost**
+> RegisteredDatabasePrices marketplaceProvidersDatabasesPost(instance)
+
+Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
+
+### Example
+
+```typescript
+import {
+    DefaultApi,
+    Configuration,
+    DatabasePricesRequest
+} from '@baselinehq/pricingapi-client-typescript';
+
+const configuration = new Configuration();
+const apiInstance = new DefaultApi(configuration);
+
+let instance: DatabasePricesRequest; //Custom database pricing request
+
+const { status, data } = await apiInstance.marketplaceProvidersDatabasesPost(
+    instance
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **instance** | **DatabasePricesRequest**| Custom database pricing request | |
+
+
+### Return type
+
+**RegisteredDatabasePrices**
+
+### Authorization
+
+[ApiKeyAuth](../README.md#ApiKeyAuth), [BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Pricing response for custom database pricing |  -  |
+|**400** | Invalid request body |  -  |
+|**401** | Provider and organization do not match |  -  |
+|**500** | Internal server error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **marketplaceProvidersDisksDelete**
+> RegisteredDiskPrices marketplaceProvidersDisksDelete()
+
+Delete one of your storage rates by id. A rate a volume is already priced against cannot be deleted; the request fails while that link exists, so re-pin those volumes first. Once it is gone, a volume still carrying its id stops resolving a price. Superseded by DELETE /v1/marketplace/disks/{id}, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -251,7 +465,7 @@ const { status, data } = await apiInstance.marketplaceProvidersDisksDelete(
 
 ### Return type
 
-**TypesCustomDiskPricingResponse**
+**RegisteredDiskPrices**
 
 ### Authorization
 
@@ -275,9 +489,9 @@ const { status, data } = await apiInstance.marketplaceProvidersDisksDelete(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **marketplaceProvidersDisksGet**
-> TypesMarketplaceDiskProvidersResponse marketplaceProvidersDisksGet()
+> DiskPriceList marketplaceProvidersDisksGet()
 
-Get your custom disk pricing entries
+List the storage rates your organization has registered. Only your own rates are returned. Filters combine, and paging is by limit and offset. Superseded by GET /v1/marketplace/disks, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -290,16 +504,38 @@ import {
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
-const { status, data } = await apiInstance.marketplaceProvidersDisksGet();
+let limit: number; //Maximum entries to return (default 500) (optional) (default to undefined)
+let offset: number; //Entries to skip (optional) (default to undefined)
+let service: string; //Filter by service (optional) (default to undefined)
+let region: string; //Filter by region (optional) (default to undefined)
+let type: string; //Filter by disk type (optional) (default to undefined)
+let usageType: string; //Filter by usage type (optional) (default to undefined)
+
+const { status, data } = await apiInstance.marketplaceProvidersDisksGet(
+    limit,
+    offset,
+    service,
+    region,
+    type,
+    usageType
+);
 ```
 
 ### Parameters
-This endpoint does not have any parameters.
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **limit** | [**number**] | Maximum entries to return (default 500) | (optional) defaults to undefined|
+| **offset** | [**number**] | Entries to skip | (optional) defaults to undefined|
+| **service** | [**string**] | Filter by service | (optional) defaults to undefined|
+| **region** | [**string**] | Filter by region | (optional) defaults to undefined|
+| **type** | [**string**] | Filter by disk type | (optional) defaults to undefined|
+| **usageType** | [**string**] | Filter by usage type | (optional) defaults to undefined|
 
 
 ### Return type
 
-**TypesMarketplaceDiskProvidersResponse**
+**DiskPriceList**
 
 ### Authorization
 
@@ -315,15 +551,16 @@ This endpoint does not have any parameters.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Pricing response for custom disk pricing |  -  |
+|**400** | Invalid limit or offset |  -  |
 |**401** | Unauthorized |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **marketplaceProvidersDisksPost**
-> TypesCustomDiskPricingResponse marketplaceProvidersDisksPost(instance)
+> RegisteredDiskPrices marketplaceProvidersDisksPost(instance)
 
-Register a custom disk provider
+Register your own storage rates, priced per GB hour with optional IOPS and throughput components and the capacity band they apply to. An entry is upserted on its natural key (provider, service, region, availability zone, disk type, usage type and period billing hours), so re-posting with a new cost keeps its id; changing a key field mints a new one. Capacity, IOPS and throughput bands are not part of that key, so a second band for the same disk type replaces the first: give each band its own usage type. The returned id is what you attach with the `costgraph.ai/pricing-id.storage` label or tag. Superseded by POST /v1/marketplace/disks, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -331,13 +568,13 @@ Register a custom disk provider
 import {
     DefaultApi,
     Configuration,
-    TypesCustomDiskPriceRequest
+    DiskPricesRequest
 } from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
-let instance: TypesCustomDiskPriceRequest; //Custom disk pricing request
+let instance: DiskPricesRequest; //Custom disk pricing request
 
 const { status, data } = await apiInstance.marketplaceProvidersDisksPost(
     instance
@@ -348,12 +585,12 @@ const { status, data } = await apiInstance.marketplaceProvidersDisksPost(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **instance** | **TypesCustomDiskPriceRequest**| Custom disk pricing request | |
+| **instance** | **DiskPricesRequest**| Custom disk pricing request | |
 
 
 ### Return type
 
-**TypesCustomDiskPricingResponse**
+**RegisteredDiskPrices**
 
 ### Authorization
 
@@ -375,10 +612,134 @@ const { status, data } = await apiInstance.marketplaceProvidersDisksPost(
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **pricingComputePost**
-> SchemaComputePricingsRow pricingComputePost(instance)
+# **marketplaceProvidersModelsDelete**
+> RegisteredModelPrices marketplaceProvidersModelsDelete()
 
-Get pricing for compute instances
+Delete one of your model rates by id. The row is closed rather than removed, so spend already priced against it keeps that rate. Usage still pinned to it stops resolving a price, so re-pin before deleting. Superseded by DELETE /v1/marketplace/models/{id}, which returns RFC 9457 problem responses on failure.
+
+### Example
+
+```typescript
+import {
+    DefaultApi,
+    Configuration
+} from '@baselinehq/pricingapi-client-typescript';
+
+const configuration = new Configuration();
+const apiInstance = new DefaultApi(configuration);
+
+let id: string; //Model pricing ID (default to undefined)
+
+const { status, data } = await apiInstance.marketplaceProvidersModelsDelete(
+    id
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **id** | [**string**] | Model pricing ID | defaults to undefined|
+
+
+### Return type
+
+**RegisteredModelPrices**
+
+### Authorization
+
+[ApiKeyAuth](../README.md#ApiKeyAuth), [BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Pricing response for custom model pricing |  -  |
+|**400** | Invalid id |  -  |
+|**401** | Host and organization do not match |  -  |
+|**404** | Model pricing entry not found |  -  |
+|**500** | Internal server error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **marketplaceProvidersModelsGet**
+> ModelPriceList marketplaceProvidersModelsGet()
+
+List the live version of each model rate your organization has registered. Only your own rates are returned. Filters combine, and paging is by limit and offset. Superseded by GET /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
+
+### Example
+
+```typescript
+import {
+    DefaultApi,
+    Configuration
+} from '@baselinehq/pricingapi-client-typescript';
+
+const configuration = new Configuration();
+const apiInstance = new DefaultApi(configuration);
+
+let limit: number; //Maximum entries to return (default 500) (optional) (default to undefined)
+let offset: number; //Entries to skip (optional) (default to undefined)
+let model: string; //Filter by model (optional) (default to undefined)
+let provider: string; //Filter by model provider (optional) (default to undefined)
+let region: string; //Filter by region (optional) (default to undefined)
+let tokenBucket: string; //Filter by token bucket (optional) (default to undefined)
+
+const { status, data } = await apiInstance.marketplaceProvidersModelsGet(
+    limit,
+    offset,
+    model,
+    provider,
+    region,
+    tokenBucket
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **limit** | [**number**] | Maximum entries to return (default 500) | (optional) defaults to undefined|
+| **offset** | [**number**] | Entries to skip | (optional) defaults to undefined|
+| **model** | [**string**] | Filter by model | (optional) defaults to undefined|
+| **provider** | [**string**] | Filter by model provider | (optional) defaults to undefined|
+| **region** | [**string**] | Filter by region | (optional) defaults to undefined|
+| **tokenBucket** | [**string**] | Filter by token bucket | (optional) defaults to undefined|
+
+
+### Return type
+
+**ModelPriceList**
+
+### Authorization
+
+[ApiKeyAuth](../README.md#ApiKeyAuth), [BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Pricing response for custom model pricing |  -  |
+|**400** | Invalid limit or offset |  -  |
+|**401** | Unauthorized |  -  |
+|**500** | Internal server error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **marketplaceProvidersModelsPost**
+> RegisteredModelPrices marketplaceProvidersModelsPost(instance)
+
+Register custom token pricing for models you host. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -386,13 +747,68 @@ Get pricing for compute instances
 import {
     DefaultApi,
     Configuration,
-    GithubComBaselinehqGolangSharedTypesInstance
+    ModelPricesRequest
 } from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
-let instance: GithubComBaselinehqGolangSharedTypesInstance; //Instance
+let instance: ModelPricesRequest; //Custom model pricing request
+
+const { status, data } = await apiInstance.marketplaceProvidersModelsPost(
+    instance
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **instance** | **ModelPricesRequest**| Custom model pricing request | |
+
+
+### Return type
+
+**RegisteredModelPrices**
+
+### Authorization
+
+[ApiKeyAuth](../README.md#ApiKeyAuth), [BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Pricing response for custom model pricing |  -  |
+|**400** | Invalid request body |  -  |
+|**401** | Host and organization do not match |  -  |
+|**500** | Internal server error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **pricingComputePost**
+> ComputePrice pricingComputePost(instance)
+
+Get pricing for compute instances Superseded by POST /v1/pricing/compute, which returns RFC 9457 problem responses on failure.
+
+### Example
+
+```typescript
+import {
+    DefaultApi,
+    Configuration,
+    Instance
+} from '@baselinehq/pricingapi-client-typescript';
+
+const configuration = new Configuration();
+const apiInstance = new DefaultApi(configuration);
+
+let instance: Instance; //Instance
 
 const { status, data } = await apiInstance.pricingComputePost(
     instance
@@ -403,12 +819,12 @@ const { status, data } = await apiInstance.pricingComputePost(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **instance** | **GithubComBaselinehqGolangSharedTypesInstance**| Instance | |
+| **instance** | **Instance**| Instance | |
 
 
 ### Return type
 
-**SchemaComputePricingsRow**
+**ComputePrice**
 
 ### Authorization
 
@@ -432,9 +848,9 @@ const { status, data } = await apiInstance.pricingComputePost(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **pricingDisksPost**
-> SchemaDiskPricingsRow pricingDisksPost(instance)
+> DiskPrice pricingDisksPost(instance)
 
-Get pricing for a disk
+Get pricing for a disk Superseded by POST /v1/pricing/disks, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -442,13 +858,13 @@ Get pricing for a disk
 import {
     DefaultApi,
     Configuration,
-    TypesDisk
+    Disk
 } from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
-let instance: TypesDisk; //Disk
+let instance: Disk; //Disk
 
 const { status, data } = await apiInstance.pricingDisksPost(
     instance
@@ -459,12 +875,12 @@ const { status, data } = await apiInstance.pricingDisksPost(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **instance** | **TypesDisk**| Disk | |
+| **instance** | **Disk**| Disk | |
 
 
 ### Return type
 
-**SchemaDiskPricingsRow**
+**DiskPrice**
 
 ### Authorization
 
@@ -488,9 +904,9 @@ const { status, data } = await apiInstance.pricingDisksPost(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **pricingPost**
-> SchemaComputePricingsRow pricingPost(instance)
+> ComputePrice pricingPost(instance)
 
-Get pricing for compute instances
+Get pricing for compute instances Superseded by POST /v1/pricing/compute, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -498,13 +914,13 @@ Get pricing for compute instances
 import {
     DefaultApi,
     Configuration,
-    GithubComBaselinehqGolangSharedTypesInstance
+    Instance
 } from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
-let instance: GithubComBaselinehqGolangSharedTypesInstance; //Instance
+let instance: Instance; //Instance
 
 const { status, data } = await apiInstance.pricingPost(
     instance
@@ -515,12 +931,12 @@ const { status, data } = await apiInstance.pricingPost(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **instance** | **GithubComBaselinehqGolangSharedTypesInstance**| Instance | |
+| **instance** | **Instance**| Instance | |
 
 
 ### Return type
 
-**SchemaComputePricingsRow**
+**ComputePrice**
 
 ### Authorization
 
@@ -546,7 +962,7 @@ const { status, data } = await apiInstance.pricingPost(
 # **providersGet**
 > { [key: string]: ProviderConfig; } providersGet()
 
-Get details for the providers
+Get details for the providers Superseded by GET /v1/providers, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -589,9 +1005,9 @@ This endpoint does not have any parameters.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **recommendationsComputePost**
-> { [key: string]: Array<TypesComputeResultsValueInner>; } recommendationsComputePost(instance)
+> Array<ComputeRecommendation> recommendationsComputePost(instance)
 
-Get recommendations for compute instances (Recommendations, InstancePricing, VM, Savings)
+Get the cheapest compute candidate per provider with savings versus the requested instance Superseded by POST /v1/recommendations/compute, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -599,13 +1015,13 @@ Get recommendations for compute instances (Recommendations, InstancePricing, VM,
 import {
     DefaultApi,
     Configuration,
-    TypesComputeRequest
+    ComputeRecommendationRequest
 } from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
-let instance: TypesComputeRequest; //Instance
+let instance: ComputeRecommendationRequest; //Instance
 
 const { status, data } = await apiInstance.recommendationsComputePost(
     instance
@@ -616,12 +1032,12 @@ const { status, data } = await apiInstance.recommendationsComputePost(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **instance** | **TypesComputeRequest**| Instance | |
+| **instance** | **ComputeRecommendationRequest**| Instance | |
 
 
 ### Return type
 
-**{ [key: string]: Array<TypesComputeResultsValueInner>; }**
+**Array<ComputeRecommendation>**
 
 ### Authorization
 
@@ -645,9 +1061,9 @@ const { status, data } = await apiInstance.recommendationsComputePost(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **recommendationsDisksPost**
-> { [key: string]: Array<TypesDiskResultsValueInner>; } recommendationsDisksPost(instance)
+> Array<DiskRecommendation> recommendationsDisksPost(instance)
 
-Get recommendations for disks used in the server (Recommendations, DiskPricing, Savings)
+Get the cheapest disk candidate per provider with savings versus the requested disk Superseded by POST /v1/recommendations/disks, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -655,13 +1071,13 @@ Get recommendations for disks used in the server (Recommendations, DiskPricing, 
 import {
     DefaultApi,
     Configuration,
-    TypesDiskRequest
+    DiskRecommendationRequest
 } from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
-let instance: TypesDiskRequest; //Instance
+let instance: DiskRecommendationRequest; //Instance
 
 const { status, data } = await apiInstance.recommendationsDisksPost(
     instance
@@ -672,12 +1088,12 @@ const { status, data } = await apiInstance.recommendationsDisksPost(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **instance** | **TypesDiskRequest**| Instance | |
+| **instance** | **DiskRecommendationRequest**| Instance | |
 
 
 ### Return type
 
-**{ [key: string]: Array<TypesDiskResultsValueInner>; }**
+**Array<DiskRecommendation>**
 
 ### Authorization
 
@@ -701,9 +1117,9 @@ const { status, data } = await apiInstance.recommendationsDisksPost(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **recommendationsPost**
-> { [key: string]: Array<TypesComputeResultsValueInner>; } recommendationsPost(instance)
+> Array<ComputeRecommendation> recommendationsPost(instance)
 
-Get recommendations for compute instances (Recommendations, InstancePricing, VM, Savings)
+Get the cheapest compute candidate per provider with savings versus the requested instance Superseded by POST /v1/recommendations/compute, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -711,13 +1127,13 @@ Get recommendations for compute instances (Recommendations, InstancePricing, VM,
 import {
     DefaultApi,
     Configuration,
-    TypesComputeRequest
+    ComputeRecommendationRequest
 } from '@baselinehq/pricingapi-client-typescript';
 
 const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
-let instance: TypesComputeRequest; //Instance
+let instance: ComputeRecommendationRequest; //Instance
 
 const { status, data } = await apiInstance.recommendationsPost(
     instance
@@ -728,12 +1144,12 @@ const { status, data } = await apiInstance.recommendationsPost(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **instance** | **TypesComputeRequest**| Instance | |
+| **instance** | **ComputeRecommendationRequest**| Instance | |
 
 
 ### Return type
 
-**{ [key: string]: Array<TypesComputeResultsValueInner>; }**
+**Array<ComputeRecommendation>**
 
 ### Authorization
 

@@ -1,19 +1,21 @@
-# HandlerErrorResponse
+# FilterSet
 
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**error** | **string** |  | [optional] [default to undefined]
+**filters** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
+**kind** | **string** |  | [optional] [default to undefined]
 
 ## Example
 
 ```typescript
-import { HandlerErrorResponse } from '@baselinehq/pricingapi-client-typescript';
+import { FilterSet } from '@baselinehq/pricingapi-client-typescript';
 
-const instance: HandlerErrorResponse = {
-    error,
+const instance: FilterSet = {
+    filters,
+    kind,
 };
 ```
 

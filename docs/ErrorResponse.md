@@ -1,19 +1,19 @@
-# TypesCustomDiskPriceRequest
+# ErrorResponse
 
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**entries** | [**Array&lt;SchemaDiskPricingsRow&gt;**](SchemaDiskPricingsRow.md) |  | [default to undefined]
+**error** | **string** |  | [optional] [default to undefined]
 
 ## Example
 
 ```typescript
-import { TypesCustomDiskPriceRequest } from '@baselinehq/pricingapi-client-typescript';
+import { ErrorResponse } from '@baselinehq/pricingapi-client-typescript';
 
-const instance: TypesCustomDiskPriceRequest = {
-    entries,
+const instance: ErrorResponse = {
+    error,
 };
 ```
 

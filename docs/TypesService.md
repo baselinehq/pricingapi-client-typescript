@@ -23,6 +23,38 @@
 
 * `AmazonEBS` (value: `'AmazonEBS'`)
 
+* `AmazonRDS` (value: `'AmazonRDS'`)
+
+* `AuroraDSQL` (value: `'AuroraDSQL'`)
+
+* `CloudSQL` (value: `'CloudSQL'`)
+
+* `AlloyDB` (value: `'AlloyDB'`)
+
+* `CloudSpanner` (value: `'CloudSpanner'`)
+
+* `AzureDatabaseForPostgreSQL` (value: `'AzureDatabaseForPostgreSQL'`)
+
+* `AzureDatabaseForMySQL` (value: `'AzureDatabaseForMySQL'`)
+
+* `AzureSQLDatabase` (value: `'AzureSQLDatabase'`)
+
+* `AzureSQLManagedInstance` (value: `'AzureSQLManagedInstance'`)
+
+* `PlanetScaleDB` (value: `'PlanetScale'`)
+
 * `ComputeEnginePersistentDisk` (value: `'ComputeEnginePersistentDisk'`)
+
+* `STACKITCompute` (value: `'STACKITCompute'`)
+
+* `STACKITBlockStorage` (value: `'STACKITBlockStorage'`)
+
+* `STACKITDatabase` (value: `'STACKITDatabase'`)
+
+* `AkamaiLinode` (value: `'AkamaiLinode'`)
+
+* `AkamaiBlockStorage` (value: `'AkamaiBlockStorage'`)
+
+* `AkamaiDatabase` (value: `'AkamaiDatabase'`)
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

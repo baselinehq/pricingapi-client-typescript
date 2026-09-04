@@ -1,4 +1,4 @@
-# GithubComBaselinehqPricingapiPkgTypesStatus
+# RegistrationStatus
 
 
 ## Enum

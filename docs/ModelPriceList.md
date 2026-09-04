@@ -1,19 +1,19 @@
-# TypesCustomPriceRequest
+# ModelPriceList
 
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**entries** | [**Array&lt;SchemaComputePricingsRow&gt;**](SchemaComputePricingsRow.md) |  | [default to undefined]
+**providers** | [**Array&lt;ModelPrice&gt;**](ModelPrice.md) |  | [optional] [default to undefined]
 
 ## Example
 
 ```typescript
-import { TypesCustomPriceRequest } from '@baselinehq/pricingapi-client-typescript';
+import { ModelPriceList } from '@baselinehq/pricingapi-client-typescript';
 
-const instance: TypesCustomPriceRequest = {
-    entries,
+const instance: ModelPriceList = {
+    providers,
 };
 ```
 

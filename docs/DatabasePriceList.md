@@ -1,18 +1,18 @@
-# TypesMarketplaceProvidersResponse
+# DatabasePriceList
 
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**providers** | [**Array&lt;SchemaComputePricingsRow&gt;**](SchemaComputePricingsRow.md) |  | [optional] [default to undefined]
+**providers** | [**Array&lt;DatabasePrice&gt;**](DatabasePrice.md) |  | [optional] [default to undefined]
 
 ## Example
 
 ```typescript
-import { TypesMarketplaceProvidersResponse } from '@baselinehq/pricingapi-client-typescript';
+import { DatabasePriceList } from '@baselinehq/pricingapi-client-typescript';
 
-const instance: TypesMarketplaceProvidersResponse = {
+const instance: DatabasePriceList = {
     providers,
 };
 ```
