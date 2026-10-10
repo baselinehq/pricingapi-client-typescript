@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   release:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubicloud-standard-4
     steps:
       - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
         with:
