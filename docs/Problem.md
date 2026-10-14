@@ -5,6 +5,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**affected** | [**Array&lt;AffectedResource&gt;**](AffectedResource.md) |  | [optional] [default to undefined]
 **code** | **string** |  | [optional] [default to undefined]
 **detail** | **string** |  | [optional] [default to undefined]
 **errors** | [**Array&lt;FieldError&gt;**](FieldError.md) |  | [optional] [default to undefined]
@@ -19,6 +20,7 @@ Name | Type | Description | Notes
 import { Problem } from '@baselinehq/pricingapi-client-typescript';
 
 const instance: Problem = {
+    affected,
     code,
     detail,
     errors,

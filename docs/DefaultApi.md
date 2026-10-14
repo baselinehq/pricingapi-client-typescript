@@ -119,7 +119,9 @@ const { status, data } = await apiInstance.marketplaceProvidersComputeDelete(
 |**200** | Pricing response for a custom provider |  -  |
 |**400** | Invalid id |  -  |
 |**401** | Provider and organization do not match |  -  |
+|**403** | Credential lacks the pricing:write scope or admin role |  -  |
 |**404** | Instance not found |  -  |
+|**409** | Price is still assigned; the response lists what uses it |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -189,6 +191,7 @@ const { status, data } = await apiInstance.marketplaceProvidersComputeGet(
 |**200** | Pricing response for custom pricing |  -  |
 |**400** | Invalid limit or offset |  -  |
 |**401** | Unauthorized |  -  |
+|**403** | Credential lacks the pricing:read scope or member role |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -196,7 +199,7 @@ const { status, data } = await apiInstance.marketplaceProvidersComputeGet(
 # **marketplaceProvidersComputePost**
 > RegisteredComputePrices marketplaceProvidersComputePost(instance)
 
-Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
+Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. Send either `cost_per_hour` or the per-resource rates (`cpu_cores_cost_per_hour`, `ram_gb_cost_per_hour`, `gpu_cost_per_hour`) and the other is derived; send both and they must agree within 0.1%. GPU cost is taken out of `cost_per_hour` before the rest is split across cpu and memory. A `cost_per_hour` of 0, or cpu and memory rates that are both 0, count as not sent. `service`, `region`, `cpu_cores`, `ram_gb` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -244,6 +247,7 @@ const { status, data } = await apiInstance.marketplaceProvidersComputePost(
 |**200** | Pricing response for a custom provider |  -  |
 |**400** | Invalid request body |  -  |
 |**401** | Provider and organization do not match |  -  |
+|**403** | Credential lacks the pricing:write scope or admin role |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -298,6 +302,7 @@ const { status, data } = await apiInstance.marketplaceProvidersDatabasesDelete(
 |**200** | Pricing response for custom database pricing |  -  |
 |**400** | Invalid id |  -  |
 |**401** | Provider and organization do not match |  -  |
+|**403** | Credential lacks the pricing:write scope or admin role |  -  |
 |**404** | Database pricing entry not found |  -  |
 |**500** | Internal server error |  -  |
 
@@ -374,6 +379,7 @@ const { status, data } = await apiInstance.marketplaceProvidersDatabasesGet(
 |**200** | Pricing response for custom database pricing |  -  |
 |**400** | Invalid limit or offset |  -  |
 |**401** | Unauthorized |  -  |
+|**403** | Credential lacks the pricing:read scope or member role |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -381,7 +387,7 @@ const { status, data } = await apiInstance.marketplaceProvidersDatabasesGet(
 # **marketplaceProvidersDatabasesPost**
 > RegisteredDatabasePrices marketplaceProvidersDatabasesPost(instance)
 
-Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
+Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. Send either `cost_per_hour` or the cpu and memory rates and the other is derived; send both and they must agree within 0.1%. A database without `cpu_cores` or `ram_gb`, such as a serverless one, needs no rates and only at least one price of any kind. `service`, `region`, `engine` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -429,6 +435,7 @@ const { status, data } = await apiInstance.marketplaceProvidersDatabasesPost(
 |**200** | Pricing response for custom database pricing |  -  |
 |**400** | Invalid request body |  -  |
 |**401** | Provider and organization do not match |  -  |
+|**403** | Credential lacks the pricing:write scope or admin role |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -483,7 +490,9 @@ const { status, data } = await apiInstance.marketplaceProvidersDisksDelete(
 |**200** | Pricing response for a custom disk provider |  -  |
 |**400** | Invalid id |  -  |
 |**401** | Provider and organization do not match |  -  |
+|**403** | Credential lacks the pricing:write scope or admin role |  -  |
 |**404** | Disk pricing entry not found |  -  |
+|**409** | Price is still assigned; the response lists what uses it |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -553,6 +562,7 @@ const { status, data } = await apiInstance.marketplaceProvidersDisksGet(
 |**200** | Pricing response for custom disk pricing |  -  |
 |**400** | Invalid limit or offset |  -  |
 |**401** | Unauthorized |  -  |
+|**403** | Credential lacks the pricing:read scope or member role |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -608,6 +618,7 @@ const { status, data } = await apiInstance.marketplaceProvidersDisksPost(
 |**200** | Pricing response for a custom disk provider |  -  |
 |**400** | Invalid request body |  -  |
 |**401** | Provider and organization do not match |  -  |
+|**403** | Credential lacks the pricing:write scope or admin role |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -662,6 +673,7 @@ const { status, data } = await apiInstance.marketplaceProvidersModelsDelete(
 |**200** | Pricing response for custom model pricing |  -  |
 |**400** | Invalid id |  -  |
 |**401** | Host and organization do not match |  -  |
+|**403** | Credential lacks the pricing:write scope or admin role |  -  |
 |**404** | Model pricing entry not found |  -  |
 |**500** | Internal server error |  -  |
 
@@ -688,7 +700,7 @@ let offset: number; //Entries to skip (optional) (default to undefined)
 let model: string; //Filter by model (optional) (default to undefined)
 let provider: string; //Filter by model provider (optional) (default to undefined)
 let region: string; //Filter by region (optional) (default to undefined)
-let tokenBucket: string; //Filter by token bucket (optional) (default to undefined)
+let tokenBucket: 'input' | 'output' | 'cache_read' | 'cache_write'; //Filter by token bucket. Every bucket is priced separately, so a model has one price per bucket (optional) (default to undefined)
 
 const { status, data } = await apiInstance.marketplaceProvidersModelsGet(
     limit,
@@ -709,7 +721,7 @@ const { status, data } = await apiInstance.marketplaceProvidersModelsGet(
 | **model** | [**string**] | Filter by model | (optional) defaults to undefined|
 | **provider** | [**string**] | Filter by model provider | (optional) defaults to undefined|
 | **region** | [**string**] | Filter by region | (optional) defaults to undefined|
-| **tokenBucket** | [**string**] | Filter by token bucket | (optional) defaults to undefined|
+| **tokenBucket** | [**&#39;input&#39; | &#39;output&#39; | &#39;cache_read&#39; | &#39;cache_write&#39;**]**Array<&#39;input&#39; &#124; &#39;output&#39; &#124; &#39;cache_read&#39; &#124; &#39;cache_write&#39;>** | Filter by token bucket. Every bucket is priced separately, so a model has one price per bucket | (optional) defaults to undefined|
 
 
 ### Return type
@@ -732,6 +744,7 @@ const { status, data } = await apiInstance.marketplaceProvidersModelsGet(
 |**200** | Pricing response for custom model pricing |  -  |
 |**400** | Invalid limit or offset |  -  |
 |**401** | Unauthorized |  -  |
+|**403** | Credential lacks the pricing:read scope or member role |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -739,7 +752,7 @@ const { status, data } = await apiInstance.marketplaceProvidersModelsGet(
 # **marketplaceProvidersModelsPost**
 > RegisteredModelPrices marketplaceProvidersModelsPost(instance)
 
-Register custom token pricing for models you host. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
+Register custom token pricing for models you host. Every token bucket is priced separately, so submit one entry per bucket you charge for - `input`, `output`, `cache_read`, `cache_write` - each with its own `unit_price_per_mtok`. A bucket you leave out has no rate, and usage in it resolves to no price rather than to zero. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
 
 ### Example
 
@@ -787,6 +800,7 @@ const { status, data } = await apiInstance.marketplaceProvidersModelsPost(
 |**200** | Pricing response for custom model pricing |  -  |
 |**400** | Invalid request body |  -  |
 |**401** | Host and organization do not match |  -  |
+|**403** | Credential lacks the pricing:write scope or admin role |  -  |
 |**500** | Internal server error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -809,9 +823,11 @@ const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
 let instance: Instance; //Instance
+let persist: boolean; //Save a price computed for a shape the catalogue does not list. Defaults to true. (optional) (default to undefined)
 
 const { status, data } = await apiInstance.pricingComputePost(
-    instance
+    instance,
+    persist
 );
 ```
 
@@ -820,6 +836,7 @@ const { status, data } = await apiInstance.pricingComputePost(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **instance** | **Instance**| Instance | |
+| **persist** | [**boolean**] | Save a price computed for a shape the catalogue does not list. Defaults to true. | (optional) defaults to undefined|
 
 
 ### Return type
@@ -921,9 +938,11 @@ const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
 let instance: Instance; //Instance
+let persist: boolean; //Save a price computed for a shape the catalogue does not list. Defaults to true. (optional) (default to undefined)
 
 const { status, data } = await apiInstance.pricingPost(
-    instance
+    instance,
+    persist
 );
 ```
 
@@ -932,6 +951,7 @@ const { status, data } = await apiInstance.pricingPost(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **instance** | **Instance**| Instance | |
+| **persist** | [**boolean**] | Save a price computed for a shape the catalogue does not list. Defaults to true. | (optional) defaults to undefined|
 
 
 ### Return type
@@ -1022,9 +1042,11 @@ const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
 let instance: ComputeRecommendationRequest; //Instance
+let persist: boolean; //Save a price computed for a shape the catalogue does not list. Defaults to true. (optional) (default to undefined)
 
 const { status, data } = await apiInstance.recommendationsComputePost(
-    instance
+    instance,
+    persist
 );
 ```
 
@@ -1033,6 +1055,7 @@ const { status, data } = await apiInstance.recommendationsComputePost(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **instance** | **ComputeRecommendationRequest**| Instance | |
+| **persist** | [**boolean**] | Save a price computed for a shape the catalogue does not list. Defaults to true. | (optional) defaults to undefined|
 
 
 ### Return type
@@ -1134,9 +1157,11 @@ const configuration = new Configuration();
 const apiInstance = new DefaultApi(configuration);
 
 let instance: ComputeRecommendationRequest; //Instance
+let persist: boolean; //Save a price computed for a shape the catalogue does not list. Defaults to true. (optional) (default to undefined)
 
 const { status, data } = await apiInstance.recommendationsPost(
-    instance
+    instance,
+    persist
 );
 ```
 
@@ -1145,6 +1170,7 @@ const { status, data } = await apiInstance.recommendationsPost(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **instance** | **ComputeRecommendationRequest**| Instance | |
+| **persist** | [**boolean**] | Save a price computed for a shape the catalogue does not list. Defaults to true. | (optional) defaults to undefined|
 
 
 ### Return type

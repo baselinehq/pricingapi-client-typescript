@@ -11,6 +11,8 @@ Name | Type | Description | Notes
 **operating_systems** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
 **providers** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
 **regions** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
+**same_architecture** | **boolean** |  | [optional] [default to undefined]
+**same_continent** | **boolean** |  | [optional] [default to undefined]
 **services** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
 **usage_types** | **Array&lt;string&gt;** |  | [optional] [default to undefined]
 
@@ -26,6 +28,8 @@ const instance: TypesPredicates = {
     operating_systems,
     providers,
     regions,
+    same_architecture,
+    same_continent,
     services,
     usage_types,
 };
