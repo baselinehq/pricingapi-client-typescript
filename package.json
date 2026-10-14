@@ -1,6 +1,6 @@
 {
   "name": "@baselinehq/pricingapi-client-typescript",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "OpenAPI client for @baselinehq/pricingapi-client-typescript",
   "author": "OpenAPI-Generator Contributors",
   "repository": {
