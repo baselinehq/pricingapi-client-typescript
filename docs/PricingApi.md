@@ -25,9 +25,11 @@ const configuration = new Configuration();
 const apiInstance = new PricingApi(configuration);
 
 let instance: Instance; //Machine to price
+let persist: boolean; //Save a price computed for a shape the catalogue does not list, so later lookups return the same row. Defaults to true; false returns the same price without saving it. (optional) (default to undefined)
 
 const { status, data } = await apiInstance.v1PricingComputePost(
-    instance
+    instance,
+    persist
 );
 ```
 
@@ -36,6 +38,7 @@ const { status, data } = await apiInstance.v1PricingComputePost(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **instance** | **Instance**| Machine to price | |
+| **persist** | [**boolean**] | Save a price computed for a shape the catalogue does not list, so later lookups return the same row. Defaults to true; false returns the same price without saving it. | (optional) defaults to undefined|
 
 
 ### Return type

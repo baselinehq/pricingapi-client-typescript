@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **instance** | [**TypesDisk**](TypesDisk.md) |  | [optional] [default to undefined]
 **predicates** | [**TypesPredicates**](TypesPredicates.md) |  | [optional] [default to undefined]
 **usage** | [**TypesDisk**](TypesDisk.md) |  | [optional] [default to undefined]
+**workload_class** | **string** | WorkloadClass selects which accelerator gates a compute recommendation applies: inference_single, inference_multi or training_distributed. Empty means inference_multi, which is what the recommender did before the classes existed. Disk requests do not carry one. | [optional] [default to undefined]
 
 ## Example
 
@@ -20,6 +21,7 @@ const instance: DiskRecommendationRequest = {
     instance,
     predicates,
     usage,
+    workload_class,
 };
 ```
 

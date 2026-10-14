@@ -23,30 +23,54 @@ import type { RequestArgs } from './base';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerMap } from './base';
 
+export interface AffectedResource {
+    'id'?: string;
+    'kind'?: string;
+    'name'?: string;
+}
 export interface ComputePrice {
     'architecture'?: string;
     'availability_zone'?: string;
+    /**
+     * On-demand-equivalent hourly USD; multiply by provider_pricing_rules.month_hours for monthly.
+     */
     'cost_per_hour'?: number;
     'cpu_cores'?: number;
     'cpu_cores_cost_per_hour'?: number;
     'created_at'?: string;
+    /**
+     * Currency the provider published this price in. Cost columns are always normalized USD.
+     */
     'currency'?: string;
     'gpu_cost_per_hour'?: number;
     'gpu_count'?: number;
     'gpu_type'?: string;
     'id'?: string;
     'instance_type'?: string;
+    /**
+     * cost_per_hour as published, before FX normalization. Zero when currency is USD.
+     */
     'native_cost_per_hour'?: number;
     'operating_system'?: string;
+    /**
+     * Commitment term the raw price covers: 1=hourly on-demand; 8640/25920/43200=1mo/3mo/1yr buckets. cost_per_hour is already normalized to hourly.
+     */
     'period_billing_hours'?: number;
     'provider'?: string;
     'ram_gb'?: number;
     'ram_gb_cost_per_hour'?: number;
     'raw_pricing_data'?: object;
     'region'?: string;
+    /**
+     * True when the row carries per-vCPU and per-GB rates for a shape sized at launch; resolution stores and returns a row priced at the requested vCPU and memory. NULL or false is a fixed-size shape.
+     */
+    'resizable'?: boolean | null;
     'service'?: string;
     'tags'?: object;
     'updated_at'?: string;
+    /**
+     * Pricing tier token (ONDEMAND, RESERVED, SPOT_*, *_HBP, *_BYOL, Commit1Yr/3Yr). Filter to ONDEMAND for normal pricing.
+     */
     'usage_type'?: string;
 }
 export interface ComputePriceList {
@@ -60,48 +84,58 @@ export interface ComputePricesRequest {
     'entries': Array<ComputePrice>;
 }
 export interface ComputeRecommendation {
+    'cost_per_work_unit'?: number;
+    'cpu_class'?: string;
     'pricing'?: ComputePrice;
     'savings'?: TypesSavings;
+    'work_unit'?: string;
 }
 export interface ComputeRecommendationRequest {
     'include_metadata'?: boolean;
     'instance'?: GithubComBaselinehqGolangSharedTypesInstance;
     'predicates'?: TypesPredicates;
     'usage'?: GithubComBaselinehqGolangSharedTypesVM;
+    /**
+     * WorkloadClass selects which accelerator gates a compute recommendation applies: inference_single, inference_multi or training_distributed. Empty means inference_multi, which is what the recommender did before the classes existed. Disk requests do not carry one.
+     */
+    'workload_class'?: string;
 }
 export interface DatabasePrice {
     'architecture'?: string;
     'availability_zone'?: string;
     'billing_config'?: string;
-    'capacity_unit'?: string;
-    'cost_per_capacity_unit'?: number;
-    'cost_per_hour'?: number;
-    'cost_per_io_request'?: number;
-    'cost_per_iops_hour'?: number;
-    'cost_per_storage_gb_hour'?: number;
-    'cost_per_throughput_mbps_hour'?: number;
-    'cost_per_vcpu_license_hour'?: number;
-    'cpu_cores'?: number;
-    'cpu_cores_cost_per_hour'?: number;
+    'capacity_unit'?: string | null;
+    'cost_per_capacity_unit'?: number | null;
+    'cost_per_hour'?: number | null;
+    'cost_per_io_request'?: number | null;
+    'cost_per_iops_hour'?: number | null;
+    'cost_per_storage_gb_hour'?: number | null;
+    'cost_per_throughput_mbps_hour'?: number | null;
+    'cost_per_vcpu_license_hour'?: number | null;
+    'cpu_cores'?: number | null;
+    'cpu_cores_cost_per_hour'?: number | null;
     'created_at'?: string;
+    /**
+     * Currency the provider published this price in. Cost columns are always normalized USD.
+     */
     'currency'?: string;
     'deployment_option'?: string;
     'edition'?: string;
     'engine'?: string;
     'id'?: string;
     'instance_type'?: string;
-    'max_iops'?: number;
-    'max_storage_gb'?: number;
-    'max_throughput_mbps'?: number;
-    'min_iops'?: number;
-    'min_storage_gb'?: number;
-    'min_throughput_mbps'?: number;
+    'max_iops'?: number | null;
+    'max_storage_gb'?: number | null;
+    'max_throughput_mbps'?: number | null;
+    'min_iops'?: number | null;
+    'min_storage_gb'?: number | null;
+    'min_throughput_mbps'?: number | null;
     'native_cost_per_hour'?: number;
     'native_cost_per_storage_gb_hour'?: number;
     'period_billing_hours'?: number;
     'provider'?: string;
-    'ram_gb'?: number;
-    'ram_gb_cost_per_hour'?: number;
+    'ram_gb'?: number | null;
+    'ram_gb_cost_per_hour'?: number | null;
     'raw_pricing_data'?: object;
     'region'?: string;
     'service'?: string;
@@ -141,11 +175,20 @@ export interface DiskPrice {
     'cost_per_iops_hour'?: number;
     'cost_per_throughput_mbps_hour'?: number;
     'created_at'?: string;
+    /**
+     * Currency the provider published this price in. Cost columns are always normalized USD.
+     */
     'currency'?: string;
     'id'?: string;
+    /**
+     * Provisioning upper bound the disk type supports at this price (validation range), not an actual disk size.
+     */
     'max_capacity_gb'?: number;
     'max_iops'?: number;
     'max_throughput_mbps'?: number;
+    /**
+     * Provisioning lower bound the disk type supports at this price (validation range), not an actual disk size.
+     */
     'min_capacity_gb'?: number;
     'min_iops'?: number;
     'min_throughput_mbps'?: number;
@@ -181,6 +224,10 @@ export interface DiskRecommendationRequest {
     'instance'?: TypesDisk;
     'predicates'?: TypesPredicates;
     'usage'?: TypesDisk;
+    /**
+     * WorkloadClass selects which accelerator gates a compute recommendation applies: inference_single, inference_multi or training_distributed. Empty means inference_multi, which is what the recommender did before the classes existed. Disk requests do not carry one.
+     */
+    'workload_class'?: string;
 }
 export interface ErrorResponse {
     'error'?: string;
@@ -244,11 +291,179 @@ export const GithubComBaselinehqGolangSharedTypesProvider = {
     /**
     * 
     */
-    Akamai: 'Akamai',
+    Linode: 'Linode',
     /**
     * Base provider for default pricing, no specific cloud provider
     */
     Base: 'Base',
+    /**
+    * 
+    */
+    Akash: 'Akash',
+    /**
+    * 
+    */
+    Alibaba: 'Alibaba',
+    /**
+    * 
+    */
+    Baseten: 'Baseten',
+    /**
+    * 
+    */
+    Beam: 'Beam',
+    /**
+    * 
+    */
+    Cerebrium: 'Cerebrium',
+    /**
+    * 
+    */
+    CIRunners: 'CIRunners',
+    /**
+    * 
+    */
+    Civo: 'Civo',
+    /**
+    * 
+    */
+    Clore: 'Clore',
+    /**
+    * 
+    */
+    CoreWeave: 'CoreWeave',
+    /**
+    * 
+    */
+    Crusoe: 'Crusoe',
+    /**
+    * 
+    */
+    CUDO: 'CUDO',
+    /**
+    * 
+    */
+    DataCrunch: 'DataCrunch',
+    /**
+    * 
+    */
+    DeepInfra: 'DeepInfra',
+    /**
+    * 
+    */
+    Denvr: 'Denvr',
+    /**
+    * 
+    */
+    E2ENetworks: 'E2ENetworks',
+    /**
+    * 
+    */
+    Exoscale: 'Exoscale',
+    /**
+    * 
+    */
+    Fal: 'Fal',
+    /**
+    * 
+    */
+    HotAisle: 'HotAisle',
+    /**
+    * 
+    */
+    Hyperbolic: 'Hyperbolic',
+    /**
+    * 
+    */
+    Hyperstack: 'Hyperstack',
+    /**
+    * 
+    */
+    IBM: 'IBM',
+    /**
+    * 
+    */
+    Lambda: 'Lambda',
+    /**
+    * 
+    */
+    Latitude: 'Latitude',
+    /**
+    * 
+    */
+    MassedCompute: 'MassedCompute',
+    /**
+    * 
+    */
+    Modal: 'Modal',
+    /**
+    * 
+    */
+    Nebius: 'Nebius',
+    /**
+    * 
+    */
+    Northflank: 'Northflank',
+    /**
+    * 
+    */
+    Novita: 'Novita',
+    /**
+    * 
+    */
+    Oblivus: 'Oblivus',
+    /**
+    * 
+    */
+    OCI: 'OCI',
+    /**
+    * 
+    */
+    OpenTelekom: 'OpenTelekom',
+    /**
+    * 
+    */
+    PrimeIntellect: 'PrimeIntellect',
+    /**
+    * 
+    */
+    Replicate: 'Replicate',
+    /**
+    * 
+    */
+    RunPod: 'RunPod',
+    /**
+    * 
+    */
+    Salad: 'Salad',
+    /**
+    * 
+    */
+    Scaleway: 'Scaleway',
+    /**
+    * 
+    */
+    Sesterce: 'Sesterce',
+    /**
+    * 
+    */
+    Shadeform: 'Shadeform',
+    /**
+    * 
+    */
+    ThunderCompute: 'ThunderCompute',
+    /**
+    * 
+    */
+    UpCloud: 'UpCloud',
+    /**
+    * 
+    */
+    Vast: 'Vast',
+    /**
+    * 
+    */
+    Vultr: 'Vultr',
 } as const;
 
 export type GithubComBaselinehqGolangSharedTypesProvider = typeof GithubComBaselinehqGolangSharedTypesProvider[keyof typeof GithubComBaselinehqGolangSharedTypesProvider];
@@ -312,10 +527,20 @@ export interface ModelPrice {
     'source_url'?: string;
     'structured_output'?: boolean;
     'tags'?: object;
-    'token_bucket'?: string;
+    'token_bucket'?: ModelPriceTokenBucketEnum;
     'tool_call'?: boolean;
     'unit_price_per_mtok'?: number;
 }
+
+export const ModelPriceTokenBucketEnum = {
+    Input: 'input',
+    Output: 'output',
+    CacheRead: 'cache_read',
+    CacheWrite: 'cache_write',
+} as const;
+
+export type ModelPriceTokenBucketEnum = typeof ModelPriceTokenBucketEnum[keyof typeof ModelPriceTokenBucketEnum];
+
 export interface ModelPriceList {
     'providers'?: Array<ModelPrice>;
 }
@@ -331,6 +556,7 @@ export interface Page {
     'next_cursor'?: string;
 }
 export interface Problem {
+    'affected'?: Array<AffectedResource>;
     'code'?: string;
     'detail'?: string;
     'errors'?: Array<FieldError>;
@@ -390,6 +616,32 @@ export const RegistrationStatus = {
 export type RegistrationStatus = typeof RegistrationStatus[keyof typeof RegistrationStatus];
 
 
+export interface RunnerRecommendation {
+    'billed_seconds'?: number;
+    'compute_source'?: string;
+    'cost'?: number;
+    'cost_per_month'?: number;
+    'fetched_on'?: string;
+    'flags'?: Array<string>;
+    'plan_fees'?: Array<TypesRunnerPlanFee>;
+    'pricing_model'?: string;
+    'provider'?: string;
+    'runtime_seconds'?: number;
+    'savings_vs_current'?: number;
+    'sku'?: string;
+    'source_url'?: string;
+    'vm_instance_type'?: string;
+}
+export interface RunnerRecommendationRequest {
+    'billed_minutes'?: number;
+    'current'?: TypesRunnerCurrent;
+    'job_count'?: number;
+    'jobs_seconds'?: Array<number>;
+    'monthly_minutes'?: number;
+    'public_repo'?: boolean;
+    'self_hosted'?: TypesRunnerSelfHosted;
+    'shape'?: TypesRunnerShape;
+}
 export interface TypesDisk {
     'availability_zone'?: string;
     'capacity_gb'?: number;
@@ -412,8 +664,33 @@ export interface TypesPredicates {
     'operating_systems'?: Array<string>;
     'providers'?: Array<string>;
     'regions'?: Array<string>;
+    'same_architecture'?: boolean;
+    'same_continent'?: boolean;
     'services'?: Array<string>;
     'usage_types'?: Array<string>;
+}
+export interface TypesRunnerCurrent {
+    'cost'?: number;
+    'provider'?: string;
+    'sku'?: string;
+}
+export interface TypesRunnerPlanFee {
+    'fee'?: number;
+    'per'?: string;
+    'period'?: string;
+    'plan'?: string;
+}
+export interface TypesRunnerSelfHosted {
+    'github_self_hosted_fee'?: boolean;
+    'provider'?: string;
+    'region'?: string;
+}
+export interface TypesRunnerShape {
+    'arch'?: string;
+    'cpu_cores'?: number;
+    'gpu_count'?: number;
+    'os'?: string;
+    'ram_gb'?: number;
 }
 export interface TypesSavings {
     'amount_per_hour'?: number;
@@ -450,6 +727,56 @@ export const TypesService = {
     AkamaiLinode: 'AkamaiLinode',
     AkamaiBlockStorage: 'AkamaiBlockStorage',
     AkamaiDatabase: 'AkamaiDatabase',
+    AkashCompute: 'AkashCompute',
+    AlibabaCompute: 'AlibabaCompute',
+    AlibabaBlockStorage: 'AlibabaBlockStorage',
+    BasetenCompute: 'BasetenCompute',
+    BeamCompute: 'BeamCompute',
+    CerebriumCompute: 'CerebriumCompute',
+    CivoCompute: 'CivoCompute',
+    CivoBlockStorage: 'CivoBlockStorage',
+    CloreCompute: 'CloreCompute',
+    CoreWeaveCompute: 'CoreWeaveCompute',
+    CrusoeCompute: 'CrusoeCompute',
+    CUDOCompute: 'CUDOCompute',
+    DataCrunchCompute: 'DataCrunchCompute',
+    DeepInfraCompute: 'DeepInfraCompute',
+    DenvrCompute: 'DenvrCompute',
+    E2ENetworksCompute: 'E2ENetworksCompute',
+    ExoscaleCompute: 'ExoscaleCompute',
+    ExoscaleBlockStorage: 'ExoscaleBlockStorage',
+    FalCompute: 'FalCompute',
+    HotAisleCompute: 'HotAisleCompute',
+    HyperbolicCompute: 'HyperbolicCompute',
+    HyperstackCompute: 'HyperstackCompute',
+    IBMCompute: 'IBMCompute',
+    IBMBlockStorage: 'IBMBlockStorage',
+    LambdaCompute: 'LambdaCompute',
+    LatitudeCompute: 'LatitudeCompute',
+    MassedComputeCompute: 'MassedComputeCompute',
+    ModalCompute: 'ModalCompute',
+    NebiusCompute: 'NebiusCompute',
+    NorthflankCompute: 'NorthflankCompute',
+    NorthflankVolume: 'NorthflankVolume',
+    NovitaCompute: 'NovitaCompute',
+    OblivusCompute: 'OblivusCompute',
+    OCICompute: 'OCICompute',
+    OCIBlockStorage: 'OCIBlockStorage',
+    OpenTelekomCompute: 'OpenTelekomCompute',
+    PrimeIntellectCompute: 'PrimeIntellectCompute',
+    ReplicateCompute: 'ReplicateCompute',
+    RunPodCompute: 'RunPodCompute',
+    SaladCompute: 'SaladCompute',
+    ScalewayCompute: 'ScalewayCompute',
+    ScalewayBlockStorage: 'ScalewayBlockStorage',
+    SesterceCompute: 'SesterceCompute',
+    ShadeformCompute: 'ShadeformCompute',
+    ThunderComputeCompute: 'ThunderComputeCompute',
+    UpCloudCompute: 'UpCloudCompute',
+    UpCloudBlockStorage: 'UpCloudBlockStorage',
+    VastCompute: 'VastCompute',
+    VultrCompute: 'VultrCompute',
+    VultrBlockStorage: 'VultrBlockStorage',
 } as const;
 
 export type TypesService = typeof TypesService[keyof typeof TypesService];
@@ -604,7 +931,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
+         * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. Send either `cost_per_hour` or the per-resource rates (`cpu_cores_cost_per_hour`, `ram_gb_cost_per_hour`, `gpu_cost_per_hour`) and the other is derived; send both and they must agree within 0.1%. GPU cost is taken out of `cost_per_hour` before the rest is split across cpu and memory. A `cost_per_hour` of 0, or cpu and memory rates that are both 0, count as not sent. `service`, `region`, `cpu_cores`, `ram_gb` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
          * @summary Register a custom provider
          * @param {ComputePricesRequest} instance Custom pricing request
          * @param {*} [options] Override http request option.
@@ -767,7 +1094,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
+         * Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. Send either `cost_per_hour` or the cpu and memory rates and the other is derived; send both and they must agree within 0.1%. A database without `cpu_cores` or `ram_gb`, such as a serverless one, needs no rates and only at least one price of any kind. `service`, `region`, `engine` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
          * @summary Register custom database pricing
          * @param {DatabasePricesRequest} instance Custom database pricing request
          * @param {*} [options] Override http request option.
@@ -1013,12 +1340,12 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {string} [model] Filter by model
          * @param {string} [provider] Filter by model provider
          * @param {string} [region] Filter by region
-         * @param {string} [tokenBucket] Filter by token bucket
+         * @param {MarketplaceProvidersModelsGetTokenBucketEnum} [tokenBucket] Filter by token bucket. Every bucket is priced separately, so a model has one price per bucket
          * @param {*} [options] Override http request option.
          * @deprecated
          * @throws {RequiredError}
          */
-        marketplaceProvidersModelsGet: async (limit?: number, offset?: number, model?: string, provider?: string, region?: string, tokenBucket?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        marketplaceProvidersModelsGet: async (limit?: number, offset?: number, model?: string, provider?: string, region?: string, tokenBucket?: MarketplaceProvidersModelsGetTokenBucketEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/marketplace/providers/models`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1073,7 +1400,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * Register custom token pricing for models you host. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
+         * Register custom token pricing for models you host. Every token bucket is priced separately, so submit one entry per bucket you charge for - `input`, `output`, `cache_read`, `cache_write` - each with its own `unit_price_per_mtok`. A bucket you leave out has no rate, and usage in it resolves to no price rather than to zero. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
          * @summary Register custom model pricing
          * @param {ModelPricesRequest} instance Custom model pricing request
          * @param {*} [options] Override http request option.
@@ -1118,11 +1445,12 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * Get pricing for compute instances Superseded by POST /v1/pricing/compute, which returns RFC 9457 problem responses on failure.
          * @summary Get pricing for an instance
          * @param {Instance} instance Instance
+         * @param {boolean} [persist] Save a price computed for a shape the catalogue does not list. Defaults to true.
          * @param {*} [options] Override http request option.
          * @deprecated
          * @throws {RequiredError}
          */
-        pricingComputePost: async (instance: Instance, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        pricingComputePost: async (instance: Instance, persist?: boolean, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'instance' is not null or undefined
             assertParamExists('pricingComputePost', 'instance', instance)
             const localVarPath = `/pricing/compute`;
@@ -1142,6 +1470,10 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BearerAuth required
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (persist !== undefined) {
+                localVarQueryParameter['persist'] = persist;
+            }
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
             localVarHeaderParameter['Accept'] = 'application/json';
@@ -1202,11 +1534,12 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * Get pricing for compute instances Superseded by POST /v1/pricing/compute, which returns RFC 9457 problem responses on failure.
          * @summary Get pricing for an instance
          * @param {Instance} instance Instance
+         * @param {boolean} [persist] Save a price computed for a shape the catalogue does not list. Defaults to true.
          * @param {*} [options] Override http request option.
          * @deprecated
          * @throws {RequiredError}
          */
-        pricingPost: async (instance: Instance, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        pricingPost: async (instance: Instance, persist?: boolean, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'instance' is not null or undefined
             assertParamExists('pricingPost', 'instance', instance)
             const localVarPath = `/pricing`;
@@ -1226,6 +1559,10 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BearerAuth required
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (persist !== undefined) {
+                localVarQueryParameter['persist'] = persist;
+            }
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
             localVarHeaderParameter['Accept'] = 'application/json';
@@ -1281,11 +1618,12 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * Get the cheapest compute candidate per provider with savings versus the requested instance Superseded by POST /v1/recommendations/compute, which returns RFC 9457 problem responses on failure.
          * @summary Get recommendations for compute instances
          * @param {ComputeRecommendationRequest} instance Instance
+         * @param {boolean} [persist] Save a price computed for a shape the catalogue does not list. Defaults to true.
          * @param {*} [options] Override http request option.
          * @deprecated
          * @throws {RequiredError}
          */
-        recommendationsComputePost: async (instance: ComputeRecommendationRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        recommendationsComputePost: async (instance: ComputeRecommendationRequest, persist?: boolean, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'instance' is not null or undefined
             assertParamExists('recommendationsComputePost', 'instance', instance)
             const localVarPath = `/recommendations/compute`;
@@ -1305,6 +1643,10 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BearerAuth required
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (persist !== undefined) {
+                localVarQueryParameter['persist'] = persist;
+            }
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
             localVarHeaderParameter['Accept'] = 'application/json';
@@ -1365,11 +1707,12 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * Get the cheapest compute candidate per provider with savings versus the requested instance Superseded by POST /v1/recommendations/compute, which returns RFC 9457 problem responses on failure.
          * @summary Get recommendations for compute instances
          * @param {ComputeRecommendationRequest} instance Instance
+         * @param {boolean} [persist] Save a price computed for a shape the catalogue does not list. Defaults to true.
          * @param {*} [options] Override http request option.
          * @deprecated
          * @throws {RequiredError}
          */
-        recommendationsPost: async (instance: ComputeRecommendationRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        recommendationsPost: async (instance: ComputeRecommendationRequest, persist?: boolean, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'instance' is not null or undefined
             assertParamExists('recommendationsPost', 'instance', instance)
             const localVarPath = `/recommendations`;
@@ -1389,6 +1732,10 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BearerAuth required
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (persist !== undefined) {
+                localVarQueryParameter['persist'] = persist;
+            }
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
             localVarHeaderParameter['Accept'] = 'application/json';
@@ -1459,7 +1806,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
+         * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. Send either `cost_per_hour` or the per-resource rates (`cpu_cores_cost_per_hour`, `ram_gb_cost_per_hour`, `gpu_cost_per_hour`) and the other is derived; send both and they must agree within 0.1%. GPU cost is taken out of `cost_per_hour` before the rest is split across cpu and memory. A `cost_per_hour` of 0, or cpu and memory rates that are both 0, count as not sent. `service`, `region`, `cpu_cores`, `ram_gb` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
          * @summary Register a custom provider
          * @param {ComputePricesRequest} instance Custom pricing request
          * @param {*} [options] Override http request option.
@@ -1508,7 +1855,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
+         * Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. Send either `cost_per_hour` or the cpu and memory rates and the other is derived; send both and they must agree within 0.1%. A database without `cpu_cores` or `ram_gb`, such as a serverless one, needs no rates and only at least one price of any kind. `service`, `region`, `engine` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
          * @summary Register custom database pricing
          * @param {DatabasePricesRequest} instance Custom database pricing request
          * @param {*} [options] Override http request option.
@@ -1590,19 +1937,19 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {string} [model] Filter by model
          * @param {string} [provider] Filter by model provider
          * @param {string} [region] Filter by region
-         * @param {string} [tokenBucket] Filter by token bucket
+         * @param {MarketplaceProvidersModelsGetTokenBucketEnum} [tokenBucket] Filter by token bucket. Every bucket is priced separately, so a model has one price per bucket
          * @param {*} [options] Override http request option.
          * @deprecated
          * @throws {RequiredError}
          */
-        async marketplaceProvidersModelsGet(limit?: number, offset?: number, model?: string, provider?: string, region?: string, tokenBucket?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ModelPriceList>> {
+        async marketplaceProvidersModelsGet(limit?: number, offset?: number, model?: string, provider?: string, region?: string, tokenBucket?: MarketplaceProvidersModelsGetTokenBucketEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ModelPriceList>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.marketplaceProvidersModelsGet(limit, offset, model, provider, region, tokenBucket, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.marketplaceProvidersModelsGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Register custom token pricing for models you host. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
+         * Register custom token pricing for models you host. Every token bucket is priced separately, so submit one entry per bucket you charge for - `input`, `output`, `cache_read`, `cache_write` - each with its own `unit_price_per_mtok`. A bucket you leave out has no rate, and usage in it resolves to no price rather than to zero. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
          * @summary Register custom model pricing
          * @param {ModelPricesRequest} instance Custom model pricing request
          * @param {*} [options] Override http request option.
@@ -1619,12 +1966,13 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * Get pricing for compute instances Superseded by POST /v1/pricing/compute, which returns RFC 9457 problem responses on failure.
          * @summary Get pricing for an instance
          * @param {Instance} instance Instance
+         * @param {boolean} [persist] Save a price computed for a shape the catalogue does not list. Defaults to true.
          * @param {*} [options] Override http request option.
          * @deprecated
          * @throws {RequiredError}
          */
-        async pricingComputePost(instance: Instance, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ComputePrice>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.pricingComputePost(instance, options);
+        async pricingComputePost(instance: Instance, persist?: boolean, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ComputePrice>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.pricingComputePost(instance, persist, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.pricingComputePost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1647,12 +1995,13 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * Get pricing for compute instances Superseded by POST /v1/pricing/compute, which returns RFC 9457 problem responses on failure.
          * @summary Get pricing for an instance
          * @param {Instance} instance Instance
+         * @param {boolean} [persist] Save a price computed for a shape the catalogue does not list. Defaults to true.
          * @param {*} [options] Override http request option.
          * @deprecated
          * @throws {RequiredError}
          */
-        async pricingPost(instance: Instance, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ComputePrice>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.pricingPost(instance, options);
+        async pricingPost(instance: Instance, persist?: boolean, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ComputePrice>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.pricingPost(instance, persist, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.pricingPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1674,12 +2023,13 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * Get the cheapest compute candidate per provider with savings versus the requested instance Superseded by POST /v1/recommendations/compute, which returns RFC 9457 problem responses on failure.
          * @summary Get recommendations for compute instances
          * @param {ComputeRecommendationRequest} instance Instance
+         * @param {boolean} [persist] Save a price computed for a shape the catalogue does not list. Defaults to true.
          * @param {*} [options] Override http request option.
          * @deprecated
          * @throws {RequiredError}
          */
-        async recommendationsComputePost(instance: ComputeRecommendationRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<ComputeRecommendation>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.recommendationsComputePost(instance, options);
+        async recommendationsComputePost(instance: ComputeRecommendationRequest, persist?: boolean, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<ComputeRecommendation>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.recommendationsComputePost(instance, persist, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.recommendationsComputePost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1702,12 +2052,13 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * Get the cheapest compute candidate per provider with savings versus the requested instance Superseded by POST /v1/recommendations/compute, which returns RFC 9457 problem responses on failure.
          * @summary Get recommendations for compute instances
          * @param {ComputeRecommendationRequest} instance Instance
+         * @param {boolean} [persist] Save a price computed for a shape the catalogue does not list. Defaults to true.
          * @param {*} [options] Override http request option.
          * @deprecated
          * @throws {RequiredError}
          */
-        async recommendationsPost(instance: ComputeRecommendationRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<ComputeRecommendation>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.recommendationsPost(instance, options);
+        async recommendationsPost(instance: ComputeRecommendationRequest, persist?: boolean, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<ComputeRecommendation>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.recommendationsPost(instance, persist, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.recommendationsPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -1754,7 +2105,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
             return localVarFp.marketplaceProvidersComputeGet(requestParameters.limit, requestParameters.offset, requestParameters.service, requestParameters.region, requestParameters.instanceType, requestParameters.usageType, options).then((request) => request(axios, basePath));
         },
         /**
-         * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
+         * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. Send either `cost_per_hour` or the per-resource rates (`cpu_cores_cost_per_hour`, `ram_gb_cost_per_hour`, `gpu_cost_per_hour`) and the other is derived; send both and they must agree within 0.1%. GPU cost is taken out of `cost_per_hour` before the rest is split across cpu and memory. A `cost_per_hour` of 0, or cpu and memory rates that are both 0, count as not sent. `service`, `region`, `cpu_cores`, `ram_gb` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
          * @summary Register a custom provider
          * @param {DefaultApiMarketplaceProvidersComputePostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1787,7 +2138,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
             return localVarFp.marketplaceProvidersDatabasesGet(requestParameters.limit, requestParameters.offset, requestParameters.service, requestParameters.region, requestParameters.engine, requestParameters.edition, requestParameters.instanceType, requestParameters.usageType, options).then((request) => request(axios, basePath));
         },
         /**
-         * Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
+         * Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. Send either `cost_per_hour` or the cpu and memory rates and the other is derived; send both and they must agree within 0.1%. A database without `cpu_cores` or `ram_gb`, such as a serverless one, needs no rates and only at least one price of any kind. `service`, `region`, `engine` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
          * @summary Register custom database pricing
          * @param {DefaultApiMarketplaceProvidersDatabasesPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1853,7 +2204,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
             return localVarFp.marketplaceProvidersModelsGet(requestParameters.limit, requestParameters.offset, requestParameters.model, requestParameters.provider, requestParameters.region, requestParameters.tokenBucket, options).then((request) => request(axios, basePath));
         },
         /**
-         * Register custom token pricing for models you host. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
+         * Register custom token pricing for models you host. Every token bucket is priced separately, so submit one entry per bucket you charge for - `input`, `output`, `cache_read`, `cache_write` - each with its own `unit_price_per_mtok`. A bucket you leave out has no rate, and usage in it resolves to no price rather than to zero. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
          * @summary Register custom model pricing
          * @param {DefaultApiMarketplaceProvidersModelsPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -1872,7 +2223,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         pricingComputePost(requestParameters: DefaultApiPricingComputePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<ComputePrice> {
-            return localVarFp.pricingComputePost(requestParameters.instance, options).then((request) => request(axios, basePath));
+            return localVarFp.pricingComputePost(requestParameters.instance, requestParameters.persist, options).then((request) => request(axios, basePath));
         },
         /**
          * Get pricing for a disk Superseded by POST /v1/pricing/disks, which returns RFC 9457 problem responses on failure.
@@ -1894,7 +2245,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         pricingPost(requestParameters: DefaultApiPricingPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<ComputePrice> {
-            return localVarFp.pricingPost(requestParameters.instance, options).then((request) => request(axios, basePath));
+            return localVarFp.pricingPost(requestParameters.instance, requestParameters.persist, options).then((request) => request(axios, basePath));
         },
         /**
          * Get details for the providers Superseded by GET /v1/providers, which returns RFC 9457 problem responses on failure.
@@ -1915,7 +2266,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         recommendationsComputePost(requestParameters: DefaultApiRecommendationsComputePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<ComputeRecommendation>> {
-            return localVarFp.recommendationsComputePost(requestParameters.instance, options).then((request) => request(axios, basePath));
+            return localVarFp.recommendationsComputePost(requestParameters.instance, requestParameters.persist, options).then((request) => request(axios, basePath));
         },
         /**
          * Get the cheapest disk candidate per provider with savings versus the requested disk Superseded by POST /v1/recommendations/disks, which returns RFC 9457 problem responses on failure.
@@ -1937,7 +2288,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         recommendationsPost(requestParameters: DefaultApiRecommendationsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<ComputeRecommendation>> {
-            return localVarFp.recommendationsPost(requestParameters.instance, options).then((request) => request(axios, basePath));
+            return localVarFp.recommendationsPost(requestParameters.instance, requestParameters.persist, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -1976,7 +2327,7 @@ export interface DefaultApiInterface {
     marketplaceProvidersComputeGet(requestParameters?: DefaultApiMarketplaceProvidersComputeGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<ComputePriceList>;
 
     /**
-     * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
+     * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. Send either `cost_per_hour` or the per-resource rates (`cpu_cores_cost_per_hour`, `ram_gb_cost_per_hour`, `gpu_cost_per_hour`) and the other is derived; send both and they must agree within 0.1%. GPU cost is taken out of `cost_per_hour` before the rest is split across cpu and memory. A `cost_per_hour` of 0, or cpu and memory rates that are both 0, count as not sent. `service`, `region`, `cpu_cores`, `ram_gb` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
      * @summary Register a custom provider
      * @param {DefaultApiMarketplaceProvidersComputePostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -2006,7 +2357,7 @@ export interface DefaultApiInterface {
     marketplaceProvidersDatabasesGet(requestParameters?: DefaultApiMarketplaceProvidersDatabasesGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DatabasePriceList>;
 
     /**
-     * Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
+     * Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. Send either `cost_per_hour` or the cpu and memory rates and the other is derived; send both and they must agree within 0.1%. A database without `cpu_cores` or `ram_gb`, such as a serverless one, needs no rates and only at least one price of any kind. `service`, `region`, `engine` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
      * @summary Register custom database pricing
      * @param {DefaultApiMarketplaceProvidersDatabasesPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -2066,7 +2417,7 @@ export interface DefaultApiInterface {
     marketplaceProvidersModelsGet(requestParameters?: DefaultApiMarketplaceProvidersModelsGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<ModelPriceList>;
 
     /**
-     * Register custom token pricing for models you host. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
+     * Register custom token pricing for models you host. Every token bucket is priced separately, so submit one entry per bucket you charge for - `input`, `output`, `cache_read`, `cache_write` - each with its own `unit_price_per_mtok`. A bucket you leave out has no rate, and usage in it resolves to no price rather than to zero. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
      * @summary Register custom model pricing
      * @param {DefaultApiMarketplaceProvidersModelsPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -2361,9 +2712,9 @@ export interface DefaultApiMarketplaceProvidersModelsGetRequest {
     readonly region?: string
 
     /**
-     * Filter by token bucket
+     * Filter by token bucket. Every bucket is priced separately, so a model has one price per bucket
      */
-    readonly tokenBucket?: string
+    readonly tokenBucket?: MarketplaceProvidersModelsGetTokenBucketEnum
 }
 
 /**
@@ -2384,6 +2735,11 @@ export interface DefaultApiPricingComputePostRequest {
      * Instance
      */
     readonly instance: Instance
+
+    /**
+     * Save a price computed for a shape the catalogue does not list. Defaults to true.
+     */
+    readonly persist?: boolean
 }
 
 /**
@@ -2404,6 +2760,11 @@ export interface DefaultApiPricingPostRequest {
      * Instance
      */
     readonly instance: Instance
+
+    /**
+     * Save a price computed for a shape the catalogue does not list. Defaults to true.
+     */
+    readonly persist?: boolean
 }
 
 /**
@@ -2414,6 +2775,11 @@ export interface DefaultApiRecommendationsComputePostRequest {
      * Instance
      */
     readonly instance: ComputeRecommendationRequest
+
+    /**
+     * Save a price computed for a shape the catalogue does not list. Defaults to true.
+     */
+    readonly persist?: boolean
 }
 
 /**
@@ -2434,6 +2800,11 @@ export interface DefaultApiRecommendationsPostRequest {
      * Instance
      */
     readonly instance: ComputeRecommendationRequest
+
+    /**
+     * Save a price computed for a shape the catalogue does not list. Defaults to true.
+     */
+    readonly persist?: boolean
 }
 
 /**
@@ -2476,7 +2847,7 @@ export class DefaultApi extends BaseAPI implements DefaultApiInterface {
     }
 
     /**
-     * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
+     * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. Send either `cost_per_hour` or the per-resource rates (`cpu_cores_cost_per_hour`, `ram_gb_cost_per_hour`, `gpu_cost_per_hour`) and the other is derived; send both and they must agree within 0.1%. GPU cost is taken out of `cost_per_hour` before the rest is split across cpu and memory. A `cost_per_hour` of 0, or cpu and memory rates that are both 0, count as not sent. `service`, `region`, `cpu_cores`, `ram_gb` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag. Treat it as a secret you hand out deliberately: anyone holding it can pin to the rate, which is how a provider prices clusters it sells on. Superseded by POST /v1/marketplace/compute, which returns RFC 9457 problem responses on failure.
      * @summary Register a custom provider
      * @param {DefaultApiMarketplaceProvidersComputePostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -2512,7 +2883,7 @@ export class DefaultApi extends BaseAPI implements DefaultApiInterface {
     }
 
     /**
-     * Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
+     * Register your own managed database rates, keyed by engine, edition, deployment option, storage type and instance type alongside the usual provider, service and region. Send either `cost_per_hour` or the cpu and memory rates and the other is derived; send both and they must agree within 0.1%. A database without `cpu_cores` or `ram_gb`, such as a serverless one, needs no rates and only at least one price of any kind. `service`, `region`, `engine` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on the full natural key (provider, service, region, availability zone, usage type, engine, edition, deployment option, billing config, storage type, instance type, architecture and period billing hours), so re-posting with a new cost keeps its id; changing any key field mints a new one. The returned id is what you attach with the `costgraph.ai/pricing-id.database` label or tag. Superseded by POST /v1/marketplace/databases, which returns RFC 9457 problem responses on failure.
      * @summary Register custom database pricing
      * @param {DefaultApiMarketplaceProvidersDatabasesPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -2584,7 +2955,7 @@ export class DefaultApi extends BaseAPI implements DefaultApiInterface {
     }
 
     /**
-     * Register custom token pricing for models you host. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
+     * Register custom token pricing for models you host. Every token bucket is priced separately, so submit one entry per bucket you charge for - `input`, `output`, `cache_read`, `cache_write` - each with its own `unit_price_per_mtok`. A bucket you leave out has no rate, and usage in it resolves to no price rather than to zero. Entries are versioned: a price change closes the current row and opens a new one, so historic spend keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change instead of holding on to an earlier one. Superseded by POST /v1/marketplace/models, which returns RFC 9457 problem responses on failure.
      * @summary Register custom model pricing
      * @param {DefaultApiMarketplaceProvidersModelsPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -2604,7 +2975,7 @@ export class DefaultApi extends BaseAPI implements DefaultApiInterface {
      * @throws {RequiredError}
      */
     public pricingComputePost(requestParameters: DefaultApiPricingComputePostRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).pricingComputePost(requestParameters.instance, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).pricingComputePost(requestParameters.instance, requestParameters.persist, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2628,7 +2999,7 @@ export class DefaultApi extends BaseAPI implements DefaultApiInterface {
      * @throws {RequiredError}
      */
     public pricingPost(requestParameters: DefaultApiPricingPostRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).pricingPost(requestParameters.instance, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).pricingPost(requestParameters.instance, requestParameters.persist, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2651,7 +3022,7 @@ export class DefaultApi extends BaseAPI implements DefaultApiInterface {
      * @throws {RequiredError}
      */
     public recommendationsComputePost(requestParameters: DefaultApiRecommendationsComputePostRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).recommendationsComputePost(requestParameters.instance, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).recommendationsComputePost(requestParameters.instance, requestParameters.persist, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -2675,10 +3046,17 @@ export class DefaultApi extends BaseAPI implements DefaultApiInterface {
      * @throws {RequiredError}
      */
     public recommendationsPost(requestParameters: DefaultApiRecommendationsPostRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).recommendationsPost(requestParameters.instance, options).then((request) => request(this.axios, this.basePath));
+        return DefaultApiFp(this.configuration).recommendationsPost(requestParameters.instance, requestParameters.persist, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
+export const MarketplaceProvidersModelsGetTokenBucketEnum = {
+    Input: 'input',
+    Output: 'output',
+    CacheRead: 'cache_read',
+    CacheWrite: 'cache_write',
+} as const;
+export type MarketplaceProvidersModelsGetTokenBucketEnum = typeof MarketplaceProvidersModelsGetTokenBucketEnum[keyof typeof MarketplaceProvidersModelsGetTokenBucketEnum];
 
 
 /**
@@ -2753,7 +3131,7 @@ export const MarketplaceApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Delete a compute price you have published, by its id. Usage still pinned to it stops resolving a price, so re-pin before deleting.
+         * Delete a compute price you have published, by its id. A price that is still assigned cannot be deleted; the response lists what uses it so you can unassign it first.
          * @summary Delete one compute price
          * @param {string} id Price id
          * @param {*} [options] Override http request option.
@@ -2833,7 +3211,7 @@ export const MarketplaceApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Change the rate or the descriptive fields of a compute price you have published. Send only the fields you want to change. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
+         * Change the rate or the descriptive fields of a compute price you have published. Send only the fields you want to change. Changing `cost_per_hour` re-derives the per-resource rates, changing a rate re-derives `cost_per_hour`, and sending both requires them to agree within 0.1%. Changing only the size keeps `cost_per_hour` and re-splits the rates; changing only the GPU fields keeps the cpu and memory rates and re-derives `cost_per_hour`. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
          * @summary Change one compute price
          * @param {string} id Price id
          * @param {{ [key: string]: any; }} body Fields to change
@@ -2878,7 +3256,7 @@ export const MarketplaceApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag.
+         * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. Send either `cost_per_hour` or the per-resource rates (`cpu_cores_cost_per_hour`, `ram_gb_cost_per_hour`, `gpu_cost_per_hour`) and the other is derived; send both and they must agree within 0.1%. GPU cost is taken out of `cost_per_hour` before the rest is split across cpu and memory. A `cost_per_hour` of 0, or cpu and memory rates that are both 0, count as not sent. `service`, `region`, `cpu_cores`, `ram_gb` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag.
          * @summary Publish compute prices
          * @param {ComputePricesRequest} body Prices to publish
          * @param {*} [options] Override http request option.
@@ -3075,7 +3453,7 @@ export const MarketplaceApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Change the rate or the descriptive fields of a database price you have published. Send only the fields you want to change. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
+         * Change the rate or the descriptive fields of a database price you have published. Send only the fields you want to change. Changing `cost_per_hour` re-derives the per-resource rates, changing a rate re-derives `cost_per_hour`, and sending both requires them to agree within 0.1%. Changing only the size keeps `cost_per_hour` and re-splits the rates. Sending null clears an optional database price field; a database left with no price at all is rejected. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
          * @summary Change one database price
          * @param {string} id Price id
          * @param {{ [key: string]: any; }} body Fields to change
@@ -3120,7 +3498,7 @@ export const MarketplaceApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Register your own managed database rates so CostGraph can price clusters it has no public price for. An entry is upserted on its natural key (provider, service, region, engine, edition, instance type and usage type), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a database with the `costgraph.ai/pricing-id.database` label or tag.
+         * Register your own managed database rates so CostGraph can price clusters it has no public price for. Send either `cost_per_hour` or the cpu and memory rates and the other is derived; send both and they must agree within 0.1%. A database without `cpu_cores` or `ram_gb`, such as a serverless one, needs no rates and only at least one price of any kind. `service`, `region`, `engine` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, engine, edition, instance type and usage type), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a database with the `costgraph.ai/pricing-id.database` label or tag.
          * @summary Publish database prices
          * @param {DatabasePricesRequest} body Prices to publish
          * @param {*} [options] Override http request option.
@@ -3227,7 +3605,7 @@ export const MarketplaceApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Delete a disk price you have published, by its id. Usage still pinned to it stops resolving a price, so re-pin before deleting.
+         * Delete a disk price you have published, by its id. A price that is still assigned cannot be deleted; the response lists what uses it so you can unassign it first.
          * @summary Delete one disk price
          * @param {string} id Price id
          * @param {*} [options] Override http request option.
@@ -3352,7 +3730,7 @@ export const MarketplaceApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Register your own block storage rates so CostGraph can price volumes it has no public price for. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, type and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a volume with the `costgraph.ai/pricing-id.disk` label or tag.
+         * Register your own block storage rates so CostGraph can price volumes it has no public price for. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, type and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a volume with the `costgraph.ai/pricing-id.storage` label or tag.
          * @summary Publish disk prices
          * @param {DiskPricesRequest} body Prices to publish
          * @param {*} [options] Override http request option.
@@ -3440,11 +3818,11 @@ export const MarketplaceApiAxiosParamCreator = function (configuration?: Configu
          * @param {string} [model] Filter by model
          * @param {string} [provider] Filter by model provider
          * @param {string} [region] Filter by region
-         * @param {string} [tokenBucket] Filter by token bucket
+         * @param {V1MarketplaceModelsGetTokenBucketEnum} [tokenBucket] Filter by token bucket. Every bucket is priced separately, so a model has one price per bucket
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1MarketplaceModelsGet: async (limit?: number, cursor?: string, model?: string, provider?: string, region?: string, tokenBucket?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1MarketplaceModelsGet: async (limit?: number, cursor?: string, model?: string, provider?: string, region?: string, tokenBucket?: V1MarketplaceModelsGetTokenBucketEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/v1/marketplace/models`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -3624,7 +4002,7 @@ export const MarketplaceApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Register your own token rates for models you host, so CostGraph can price calls it has no public rate for. Entries are versioned: a price change closes the current row and opens a new one, so spend already recorded keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change.
+         * Register your own token rates for models you host, so CostGraph can price calls it has no public rate for. Every token bucket is priced separately, so publish one price per bucket you charge for - `input`, `output`, `cache_read`, `cache_write` - each with its own `unit_price_per_mtok`. A bucket you do not publish has no rate, and usage in it resolves to no price rather than to zero. `token_bucket` identifies the price alongside the model, host and region, so it cannot be patched later: delete the price and publish a new one to move a rate to another bucket. Entries are versioned: a price change closes the current row and opens a new one, so spend already recorded keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change.
          * @summary Publish model prices
          * @param {ModelPricesRequest} body Prices to publish
          * @param {*} [options] Override http request option.
@@ -3692,7 +4070,7 @@ export const MarketplaceApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Delete a compute price you have published, by its id. Usage still pinned to it stops resolving a price, so re-pin before deleting.
+         * Delete a compute price you have published, by its id. A price that is still assigned cannot be deleted; the response lists what uses it so you can unassign it first.
          * @summary Delete one compute price
          * @param {string} id Price id
          * @param {*} [options] Override http request option.
@@ -3718,7 +4096,7 @@ export const MarketplaceApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Change the rate or the descriptive fields of a compute price you have published. Send only the fields you want to change. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
+         * Change the rate or the descriptive fields of a compute price you have published. Send only the fields you want to change. Changing `cost_per_hour` re-derives the per-resource rates, changing a rate re-derives `cost_per_hour`, and sending both requires them to agree within 0.1%. Changing only the size keeps `cost_per_hour` and re-splits the rates; changing only the GPU fields keeps the cpu and memory rates and re-derives `cost_per_hour`. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
          * @summary Change one compute price
          * @param {string} id Price id
          * @param {{ [key: string]: any; }} body Fields to change
@@ -3732,7 +4110,7 @@ export const MarketplaceApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag.
+         * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. Send either `cost_per_hour` or the per-resource rates (`cpu_cores_cost_per_hour`, `ram_gb_cost_per_hour`, `gpu_cost_per_hour`) and the other is derived; send both and they must agree within 0.1%. GPU cost is taken out of `cost_per_hour` before the rest is split across cpu and memory. A `cost_per_hour` of 0, or cpu and memory rates that are both 0, count as not sent. `service`, `region`, `cpu_cores`, `ram_gb` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag.
          * @summary Publish compute prices
          * @param {ComputePricesRequest} body Prices to publish
          * @param {*} [options] Override http request option.
@@ -3791,7 +4169,7 @@ export const MarketplaceApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Change the rate or the descriptive fields of a database price you have published. Send only the fields you want to change. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
+         * Change the rate or the descriptive fields of a database price you have published. Send only the fields you want to change. Changing `cost_per_hour` re-derives the per-resource rates, changing a rate re-derives `cost_per_hour`, and sending both requires them to agree within 0.1%. Changing only the size keeps `cost_per_hour` and re-splits the rates. Sending null clears an optional database price field; a database left with no price at all is rejected. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
          * @summary Change one database price
          * @param {string} id Price id
          * @param {{ [key: string]: any; }} body Fields to change
@@ -3805,7 +4183,7 @@ export const MarketplaceApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Register your own managed database rates so CostGraph can price clusters it has no public price for. An entry is upserted on its natural key (provider, service, region, engine, edition, instance type and usage type), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a database with the `costgraph.ai/pricing-id.database` label or tag.
+         * Register your own managed database rates so CostGraph can price clusters it has no public price for. Send either `cost_per_hour` or the cpu and memory rates and the other is derived; send both and they must agree within 0.1%. A database without `cpu_cores` or `ram_gb`, such as a serverless one, needs no rates and only at least one price of any kind. `service`, `region`, `engine` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, engine, edition, instance type and usage type), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a database with the `costgraph.ai/pricing-id.database` label or tag.
          * @summary Publish database prices
          * @param {DatabasePricesRequest} body Prices to publish
          * @param {*} [options] Override http request option.
@@ -3836,7 +4214,7 @@ export const MarketplaceApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Delete a disk price you have published, by its id. Usage still pinned to it stops resolving a price, so re-pin before deleting.
+         * Delete a disk price you have published, by its id. A price that is still assigned cannot be deleted; the response lists what uses it so you can unassign it first.
          * @summary Delete one disk price
          * @param {string} id Price id
          * @param {*} [options] Override http request option.
@@ -3876,7 +4254,7 @@ export const MarketplaceApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Register your own block storage rates so CostGraph can price volumes it has no public price for. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, type and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a volume with the `costgraph.ai/pricing-id.disk` label or tag.
+         * Register your own block storage rates so CostGraph can price volumes it has no public price for. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, type and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a volume with the `costgraph.ai/pricing-id.storage` label or tag.
          * @summary Publish disk prices
          * @param {DiskPricesRequest} body Prices to publish
          * @param {*} [options] Override http request option.
@@ -3909,11 +4287,11 @@ export const MarketplaceApiFp = function(configuration?: Configuration) {
          * @param {string} [model] Filter by model
          * @param {string} [provider] Filter by model provider
          * @param {string} [region] Filter by region
-         * @param {string} [tokenBucket] Filter by token bucket
+         * @param {V1MarketplaceModelsGetTokenBucketEnum} [tokenBucket] Filter by token bucket. Every bucket is priced separately, so a model has one price per bucket
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1MarketplaceModelsGet(limit?: number, cursor?: string, model?: string, provider?: string, region?: string, tokenBucket?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ModelPricePage>> {
+        async v1MarketplaceModelsGet(limit?: number, cursor?: string, model?: string, provider?: string, region?: string, tokenBucket?: V1MarketplaceModelsGetTokenBucketEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ModelPricePage>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1MarketplaceModelsGet(limit, cursor, model, provider, region, tokenBucket, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MarketplaceApi.v1MarketplaceModelsGet']?.[localVarOperationServerIndex]?.url;
@@ -3960,7 +4338,7 @@ export const MarketplaceApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Register your own token rates for models you host, so CostGraph can price calls it has no public rate for. Entries are versioned: a price change closes the current row and opens a new one, so spend already recorded keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change.
+         * Register your own token rates for models you host, so CostGraph can price calls it has no public rate for. Every token bucket is priced separately, so publish one price per bucket you charge for - `input`, `output`, `cache_read`, `cache_write` - each with its own `unit_price_per_mtok`. A bucket you do not publish has no rate, and usage in it resolves to no price rather than to zero. `token_bucket` identifies the price alongside the model, host and region, so it cannot be patched later: delete the price and publish a new one to move a rate to another bucket. Entries are versioned: a price change closes the current row and opens a new one, so spend already recorded keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change.
          * @summary Publish model prices
          * @param {ModelPricesRequest} body Prices to publish
          * @param {*} [options] Override http request option.
@@ -3992,7 +4370,7 @@ export const MarketplaceApiFactory = function (configuration?: Configuration, ba
             return localVarFp.v1MarketplaceComputeGet(requestParameters.limit, requestParameters.cursor, requestParameters.service, requestParameters.region, requestParameters.instanceType, requestParameters.usageType, options).then((request) => request(axios, basePath));
         },
         /**
-         * Delete a compute price you have published, by its id. Usage still pinned to it stops resolving a price, so re-pin before deleting.
+         * Delete a compute price you have published, by its id. A price that is still assigned cannot be deleted; the response lists what uses it so you can unassign it first.
          * @summary Delete one compute price
          * @param {MarketplaceApiV1MarketplaceComputeIdDeleteRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -4012,7 +4390,7 @@ export const MarketplaceApiFactory = function (configuration?: Configuration, ba
             return localVarFp.v1MarketplaceComputeIdGet(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
-         * Change the rate or the descriptive fields of a compute price you have published. Send only the fields you want to change. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
+         * Change the rate or the descriptive fields of a compute price you have published. Send only the fields you want to change. Changing `cost_per_hour` re-derives the per-resource rates, changing a rate re-derives `cost_per_hour`, and sending both requires them to agree within 0.1%. Changing only the size keeps `cost_per_hour` and re-splits the rates; changing only the GPU fields keeps the cpu and memory rates and re-derives `cost_per_hour`. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
          * @summary Change one compute price
          * @param {MarketplaceApiV1MarketplaceComputeIdPatchRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -4022,7 +4400,7 @@ export const MarketplaceApiFactory = function (configuration?: Configuration, ba
             return localVarFp.v1MarketplaceComputeIdPatch(requestParameters.id, requestParameters.body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag.
+         * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. Send either `cost_per_hour` or the per-resource rates (`cpu_cores_cost_per_hour`, `ram_gb_cost_per_hour`, `gpu_cost_per_hour`) and the other is derived; send both and they must agree within 0.1%. GPU cost is taken out of `cost_per_hour` before the rest is split across cpu and memory. A `cost_per_hour` of 0, or cpu and memory rates that are both 0, count as not sent. `service`, `region`, `cpu_cores`, `ram_gb` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag.
          * @summary Publish compute prices
          * @param {MarketplaceApiV1MarketplaceComputePostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -4062,7 +4440,7 @@ export const MarketplaceApiFactory = function (configuration?: Configuration, ba
             return localVarFp.v1MarketplaceDatabasesIdGet(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
-         * Change the rate or the descriptive fields of a database price you have published. Send only the fields you want to change. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
+         * Change the rate or the descriptive fields of a database price you have published. Send only the fields you want to change. Changing `cost_per_hour` re-derives the per-resource rates, changing a rate re-derives `cost_per_hour`, and sending both requires them to agree within 0.1%. Changing only the size keeps `cost_per_hour` and re-splits the rates. Sending null clears an optional database price field; a database left with no price at all is rejected. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
          * @summary Change one database price
          * @param {MarketplaceApiV1MarketplaceDatabasesIdPatchRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -4072,7 +4450,7 @@ export const MarketplaceApiFactory = function (configuration?: Configuration, ba
             return localVarFp.v1MarketplaceDatabasesIdPatch(requestParameters.id, requestParameters.body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Register your own managed database rates so CostGraph can price clusters it has no public price for. An entry is upserted on its natural key (provider, service, region, engine, edition, instance type and usage type), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a database with the `costgraph.ai/pricing-id.database` label or tag.
+         * Register your own managed database rates so CostGraph can price clusters it has no public price for. Send either `cost_per_hour` or the cpu and memory rates and the other is derived; send both and they must agree within 0.1%. A database without `cpu_cores` or `ram_gb`, such as a serverless one, needs no rates and only at least one price of any kind. `service`, `region`, `engine` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, engine, edition, instance type and usage type), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a database with the `costgraph.ai/pricing-id.database` label or tag.
          * @summary Publish database prices
          * @param {MarketplaceApiV1MarketplaceDatabasesPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -4092,7 +4470,7 @@ export const MarketplaceApiFactory = function (configuration?: Configuration, ba
             return localVarFp.v1MarketplaceDisksGet(requestParameters.limit, requestParameters.cursor, requestParameters.service, requestParameters.region, requestParameters.type, requestParameters.usageType, options).then((request) => request(axios, basePath));
         },
         /**
-         * Delete a disk price you have published, by its id. Usage still pinned to it stops resolving a price, so re-pin before deleting.
+         * Delete a disk price you have published, by its id. A price that is still assigned cannot be deleted; the response lists what uses it so you can unassign it first.
          * @summary Delete one disk price
          * @param {MarketplaceApiV1MarketplaceDisksIdDeleteRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -4122,7 +4500,7 @@ export const MarketplaceApiFactory = function (configuration?: Configuration, ba
             return localVarFp.v1MarketplaceDisksIdPatch(requestParameters.id, requestParameters.body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Register your own block storage rates so CostGraph can price volumes it has no public price for. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, type and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a volume with the `costgraph.ai/pricing-id.disk` label or tag.
+         * Register your own block storage rates so CostGraph can price volumes it has no public price for. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, type and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a volume with the `costgraph.ai/pricing-id.storage` label or tag.
          * @summary Publish disk prices
          * @param {MarketplaceApiV1MarketplaceDisksPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -4182,7 +4560,7 @@ export const MarketplaceApiFactory = function (configuration?: Configuration, ba
             return localVarFp.v1MarketplaceModelsIdPatch(requestParameters.id, requestParameters.body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Register your own token rates for models you host, so CostGraph can price calls it has no public rate for. Entries are versioned: a price change closes the current row and opens a new one, so spend already recorded keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change.
+         * Register your own token rates for models you host, so CostGraph can price calls it has no public rate for. Every token bucket is priced separately, so publish one price per bucket you charge for - `input`, `output`, `cache_read`, `cache_write` - each with its own `unit_price_per_mtok`. A bucket you do not publish has no rate, and usage in it resolves to no price rather than to zero. `token_bucket` identifies the price alongside the model, host and region, so it cannot be patched later: delete the price and publish a new one to move a rate to another bucket. Entries are versioned: a price change closes the current row and opens a new one, so spend already recorded keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change.
          * @summary Publish model prices
          * @param {MarketplaceApiV1MarketplaceModelsPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -4208,7 +4586,7 @@ export interface MarketplaceApiInterface {
     v1MarketplaceComputeGet(requestParameters?: MarketplaceApiV1MarketplaceComputeGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<ComputePricePage>;
 
     /**
-     * Delete a compute price you have published, by its id. Usage still pinned to it stops resolving a price, so re-pin before deleting.
+     * Delete a compute price you have published, by its id. A price that is still assigned cannot be deleted; the response lists what uses it so you can unassign it first.
      * @summary Delete one compute price
      * @param {MarketplaceApiV1MarketplaceComputeIdDeleteRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4226,7 +4604,7 @@ export interface MarketplaceApiInterface {
     v1MarketplaceComputeIdGet(requestParameters: MarketplaceApiV1MarketplaceComputeIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<ComputePrice>;
 
     /**
-     * Change the rate or the descriptive fields of a compute price you have published. Send only the fields you want to change. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
+     * Change the rate or the descriptive fields of a compute price you have published. Send only the fields you want to change. Changing `cost_per_hour` re-derives the per-resource rates, changing a rate re-derives `cost_per_hour`, and sending both requires them to agree within 0.1%. Changing only the size keeps `cost_per_hour` and re-splits the rates; changing only the GPU fields keeps the cpu and memory rates and re-derives `cost_per_hour`. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
      * @summary Change one compute price
      * @param {MarketplaceApiV1MarketplaceComputeIdPatchRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4235,7 +4613,7 @@ export interface MarketplaceApiInterface {
     v1MarketplaceComputeIdPatch(requestParameters: MarketplaceApiV1MarketplaceComputeIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<ComputePrice>;
 
     /**
-     * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag.
+     * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. Send either `cost_per_hour` or the per-resource rates (`cpu_cores_cost_per_hour`, `ram_gb_cost_per_hour`, `gpu_cost_per_hour`) and the other is derived; send both and they must agree within 0.1%. GPU cost is taken out of `cost_per_hour` before the rest is split across cpu and memory. A `cost_per_hour` of 0, or cpu and memory rates that are both 0, count as not sent. `service`, `region`, `cpu_cores`, `ram_gb` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag.
      * @summary Publish compute prices
      * @param {MarketplaceApiV1MarketplaceComputePostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4271,7 +4649,7 @@ export interface MarketplaceApiInterface {
     v1MarketplaceDatabasesIdGet(requestParameters: MarketplaceApiV1MarketplaceDatabasesIdGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DatabasePrice>;
 
     /**
-     * Change the rate or the descriptive fields of a database price you have published. Send only the fields you want to change. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
+     * Change the rate or the descriptive fields of a database price you have published. Send only the fields you want to change. Changing `cost_per_hour` re-derives the per-resource rates, changing a rate re-derives `cost_per_hour`, and sending both requires them to agree within 0.1%. Changing only the size keeps `cost_per_hour` and re-splits the rates. Sending null clears an optional database price field; a database left with no price at all is rejected. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
      * @summary Change one database price
      * @param {MarketplaceApiV1MarketplaceDatabasesIdPatchRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4280,7 +4658,7 @@ export interface MarketplaceApiInterface {
     v1MarketplaceDatabasesIdPatch(requestParameters: MarketplaceApiV1MarketplaceDatabasesIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DatabasePrice>;
 
     /**
-     * Register your own managed database rates so CostGraph can price clusters it has no public price for. An entry is upserted on its natural key (provider, service, region, engine, edition, instance type and usage type), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a database with the `costgraph.ai/pricing-id.database` label or tag.
+     * Register your own managed database rates so CostGraph can price clusters it has no public price for. Send either `cost_per_hour` or the cpu and memory rates and the other is derived; send both and they must agree within 0.1%. A database without `cpu_cores` or `ram_gb`, such as a serverless one, needs no rates and only at least one price of any kind. `service`, `region`, `engine` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, engine, edition, instance type and usage type), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a database with the `costgraph.ai/pricing-id.database` label or tag.
      * @summary Publish database prices
      * @param {MarketplaceApiV1MarketplaceDatabasesPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4298,7 +4676,7 @@ export interface MarketplaceApiInterface {
     v1MarketplaceDisksGet(requestParameters?: MarketplaceApiV1MarketplaceDisksGetRequest, options?: RawAxiosRequestConfig): AxiosPromise<DiskPricePage>;
 
     /**
-     * Delete a disk price you have published, by its id. Usage still pinned to it stops resolving a price, so re-pin before deleting.
+     * Delete a disk price you have published, by its id. A price that is still assigned cannot be deleted; the response lists what uses it so you can unassign it first.
      * @summary Delete one disk price
      * @param {MarketplaceApiV1MarketplaceDisksIdDeleteRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4325,7 +4703,7 @@ export interface MarketplaceApiInterface {
     v1MarketplaceDisksIdPatch(requestParameters: MarketplaceApiV1MarketplaceDisksIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<DiskPrice>;
 
     /**
-     * Register your own block storage rates so CostGraph can price volumes it has no public price for. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, type and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a volume with the `costgraph.ai/pricing-id.disk` label or tag.
+     * Register your own block storage rates so CostGraph can price volumes it has no public price for. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, type and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a volume with the `costgraph.ai/pricing-id.storage` label or tag.
      * @summary Publish disk prices
      * @param {MarketplaceApiV1MarketplaceDisksPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4379,7 +4757,7 @@ export interface MarketplaceApiInterface {
     v1MarketplaceModelsIdPatch(requestParameters: MarketplaceApiV1MarketplaceModelsIdPatchRequest, options?: RawAxiosRequestConfig): AxiosPromise<ModelPrice>;
 
     /**
-     * Register your own token rates for models you host, so CostGraph can price calls it has no public rate for. Entries are versioned: a price change closes the current row and opens a new one, so spend already recorded keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change.
+     * Register your own token rates for models you host, so CostGraph can price calls it has no public rate for. Every token bucket is priced separately, so publish one price per bucket you charge for - `input`, `output`, `cache_read`, `cache_write` - each with its own `unit_price_per_mtok`. A bucket you do not publish has no rate, and usage in it resolves to no price rather than to zero. `token_bucket` identifies the price alongside the model, host and region, so it cannot be patched later: delete the price and publish a new one to move a rate to another bucket. Entries are versioned: a price change closes the current row and opens a new one, so spend already recorded keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change.
      * @summary Publish model prices
      * @param {MarketplaceApiV1MarketplaceModelsPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4679,9 +5057,9 @@ export interface MarketplaceApiV1MarketplaceModelsGetRequest {
     readonly region?: string
 
     /**
-     * Filter by token bucket
+     * Filter by token bucket. Every bucket is priced separately, so a model has one price per bucket
      */
-    readonly tokenBucket?: string
+    readonly tokenBucket?: V1MarketplaceModelsGetTokenBucketEnum
 }
 
 /**
@@ -4745,7 +5123,7 @@ export class MarketplaceApi extends BaseAPI implements MarketplaceApiInterface {
     }
 
     /**
-     * Delete a compute price you have published, by its id. Usage still pinned to it stops resolving a price, so re-pin before deleting.
+     * Delete a compute price you have published, by its id. A price that is still assigned cannot be deleted; the response lists what uses it so you can unassign it first.
      * @summary Delete one compute price
      * @param {MarketplaceApiV1MarketplaceComputeIdDeleteRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4767,7 +5145,7 @@ export class MarketplaceApi extends BaseAPI implements MarketplaceApiInterface {
     }
 
     /**
-     * Change the rate or the descriptive fields of a compute price you have published. Send only the fields you want to change. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
+     * Change the rate or the descriptive fields of a compute price you have published. Send only the fields you want to change. Changing `cost_per_hour` re-derives the per-resource rates, changing a rate re-derives `cost_per_hour`, and sending both requires them to agree within 0.1%. Changing only the size keeps `cost_per_hour` and re-splits the rates; changing only the GPU fields keeps the cpu and memory rates and re-derives `cost_per_hour`. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
      * @summary Change one compute price
      * @param {MarketplaceApiV1MarketplaceComputeIdPatchRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4778,7 +5156,7 @@ export class MarketplaceApi extends BaseAPI implements MarketplaceApiInterface {
     }
 
     /**
-     * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag.
+     * Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. Send either `cost_per_hour` or the per-resource rates (`cpu_cores_cost_per_hour`, `ram_gb_cost_per_hour`, `gpu_cost_per_hour`) and the other is derived; send both and they must agree within 0.1%. GPU cost is taken out of `cost_per_hour` before the rest is split across cpu and memory. A `cost_per_hour` of 0, or cpu and memory rates that are both 0, count as not sent. `service`, `region`, `cpu_cores`, `ram_gb` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag.
      * @summary Publish compute prices
      * @param {MarketplaceApiV1MarketplaceComputePostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4822,7 +5200,7 @@ export class MarketplaceApi extends BaseAPI implements MarketplaceApiInterface {
     }
 
     /**
-     * Change the rate or the descriptive fields of a database price you have published. Send only the fields you want to change. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
+     * Change the rate or the descriptive fields of a database price you have published. Send only the fields you want to change. Changing `cost_per_hour` re-derives the per-resource rates, changing a rate re-derives `cost_per_hour`, and sending both requires them to agree within 0.1%. Changing only the size keeps `cost_per_hour` and re-splits the rates. Sending null clears an optional database price field; a database left with no price at all is rejected. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
      * @summary Change one database price
      * @param {MarketplaceApiV1MarketplaceDatabasesIdPatchRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4833,7 +5211,7 @@ export class MarketplaceApi extends BaseAPI implements MarketplaceApiInterface {
     }
 
     /**
-     * Register your own managed database rates so CostGraph can price clusters it has no public price for. An entry is upserted on its natural key (provider, service, region, engine, edition, instance type and usage type), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a database with the `costgraph.ai/pricing-id.database` label or tag.
+     * Register your own managed database rates so CostGraph can price clusters it has no public price for. Send either `cost_per_hour` or the cpu and memory rates and the other is derived; send both and they must agree within 0.1%. A database without `cpu_cores` or `ram_gb`, such as a serverless one, needs no rates and only at least one price of any kind. `service`, `region`, `engine` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, engine, edition, instance type and usage type), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a database with the `costgraph.ai/pricing-id.database` label or tag.
      * @summary Publish database prices
      * @param {MarketplaceApiV1MarketplaceDatabasesPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4855,7 +5233,7 @@ export class MarketplaceApi extends BaseAPI implements MarketplaceApiInterface {
     }
 
     /**
-     * Delete a disk price you have published, by its id. Usage still pinned to it stops resolving a price, so re-pin before deleting.
+     * Delete a disk price you have published, by its id. A price that is still assigned cannot be deleted; the response lists what uses it so you can unassign it first.
      * @summary Delete one disk price
      * @param {MarketplaceApiV1MarketplaceDisksIdDeleteRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4888,7 +5266,7 @@ export class MarketplaceApi extends BaseAPI implements MarketplaceApiInterface {
     }
 
     /**
-     * Register your own block storage rates so CostGraph can price volumes it has no public price for. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, type and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a volume with the `costgraph.ai/pricing-id.disk` label or tag.
+     * Register your own block storage rates so CostGraph can price volumes it has no public price for. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, type and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a volume with the `costgraph.ai/pricing-id.storage` label or tag.
      * @summary Publish disk prices
      * @param {MarketplaceApiV1MarketplaceDisksPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4954,7 +5332,7 @@ export class MarketplaceApi extends BaseAPI implements MarketplaceApiInterface {
     }
 
     /**
-     * Register your own token rates for models you host, so CostGraph can price calls it has no public rate for. Entries are versioned: a price change closes the current row and opens a new one, so spend already recorded keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change.
+     * Register your own token rates for models you host, so CostGraph can price calls it has no public rate for. Every token bucket is priced separately, so publish one price per bucket you charge for - `input`, `output`, `cache_read`, `cache_write` - each with its own `unit_price_per_mtok`. A bucket you do not publish has no rate, and usage in it resolves to no price rather than to zero. `token_bucket` identifies the price alongside the model, host and region, so it cannot be patched later: delete the price and publish a new one to move a rate to another bucket. Entries are versioned: a price change closes the current row and opens a new one, so spend already recorded keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change.
      * @summary Publish model prices
      * @param {MarketplaceApiV1MarketplaceModelsPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -4972,6 +5350,13 @@ export const V1MarketplaceFiltersKindGetKindEnum = {
     Models: 'models',
 } as const;
 export type V1MarketplaceFiltersKindGetKindEnum = typeof V1MarketplaceFiltersKindGetKindEnum[keyof typeof V1MarketplaceFiltersKindGetKindEnum];
+export const V1MarketplaceModelsGetTokenBucketEnum = {
+    Input: 'input',
+    Output: 'output',
+    CacheRead: 'cache_read',
+    CacheWrite: 'cache_write',
+} as const;
+export type V1MarketplaceModelsGetTokenBucketEnum = typeof V1MarketplaceModelsGetTokenBucketEnum[keyof typeof V1MarketplaceModelsGetTokenBucketEnum];
 
 
 /**
@@ -4983,10 +5368,11 @@ export const PricingApiAxiosParamCreator = function (configuration?: Configurati
          * Resolve the hourly rate CostGraph would bill for a machine with the given shape, in the given region and usage type. Prices you have published for the machine\'s provider are preferred over the public catalogue.
          * @summary Price a machine
          * @param {Instance} instance Machine to price
+         * @param {boolean} [persist] Save a price computed for a shape the catalogue does not list, so later lookups return the same row. Defaults to true; false returns the same price without saving it.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1PricingComputePost: async (instance: Instance, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1PricingComputePost: async (instance: Instance, persist?: boolean, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'instance' is not null or undefined
             assertParamExists('v1PricingComputePost', 'instance', instance)
             const localVarPath = `/v1/pricing/compute`;
@@ -5006,6 +5392,10 @@ export const PricingApiAxiosParamCreator = function (configuration?: Configurati
 
             // authentication BearerAuth required
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (persist !== undefined) {
+                localVarQueryParameter['persist'] = persist;
+            }
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
             localVarHeaderParameter['Accept'] = 'application/json';
@@ -5074,11 +5464,12 @@ export const PricingApiFp = function(configuration?: Configuration) {
          * Resolve the hourly rate CostGraph would bill for a machine with the given shape, in the given region and usage type. Prices you have published for the machine\'s provider are preferred over the public catalogue.
          * @summary Price a machine
          * @param {Instance} instance Machine to price
+         * @param {boolean} [persist] Save a price computed for a shape the catalogue does not list, so later lookups return the same row. Defaults to true; false returns the same price without saving it.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1PricingComputePost(instance: Instance, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ComputePrice>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1PricingComputePost(instance, options);
+        async v1PricingComputePost(instance: Instance, persist?: boolean, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ComputePrice>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1PricingComputePost(instance, persist, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['PricingApi.v1PricingComputePost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -5113,7 +5504,7 @@ export const PricingApiFactory = function (configuration?: Configuration, basePa
          * @throws {RequiredError}
          */
         v1PricingComputePost(requestParameters: PricingApiV1PricingComputePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<ComputePrice> {
-            return localVarFp.v1PricingComputePost(requestParameters.instance, options).then((request) => request(axios, basePath));
+            return localVarFp.v1PricingComputePost(requestParameters.instance, requestParameters.persist, options).then((request) => request(axios, basePath));
         },
         /**
          * Resolve the rate CostGraph would bill for a block volume of the given type and capacity, in the given region. Prices you have published for the volume\'s provider are preferred over the public catalogue.
@@ -5160,6 +5551,11 @@ export interface PricingApiV1PricingComputePostRequest {
      * Machine to price
      */
     readonly instance: Instance
+
+    /**
+     * Save a price computed for a shape the catalogue does not list, so later lookups return the same row. Defaults to true; false returns the same price without saving it.
+     */
+    readonly persist?: boolean
 }
 
 /**
@@ -5184,7 +5580,7 @@ export class PricingApi extends BaseAPI implements PricingApiInterface {
      * @throws {RequiredError}
      */
     public v1PricingComputePost(requestParameters: PricingApiV1PricingComputePostRequest, options?: RawAxiosRequestConfig) {
-        return PricingApiFp(this.configuration).v1PricingComputePost(requestParameters.instance, options).then((request) => request(this.axios, this.basePath));
+        return PricingApiFp(this.configuration).v1PricingComputePost(requestParameters.instance, requestParameters.persist, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -5324,10 +5720,11 @@ export const RecommendationsApiAxiosParamCreator = function (configuration?: Con
          * Return the cheapest machine per provider that still meets the requested shape, with the saving against the machine you asked about.
          * @summary Find cheaper machines
          * @param {ComputeRecommendationRequest} instance Machine to improve on
+         * @param {boolean} [persist] Save a price computed for a shape the catalogue does not list. Defaults to true; false returns the same recommendations without saving.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        v1RecommendationsComputePost: async (instance: ComputeRecommendationRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        v1RecommendationsComputePost: async (instance: ComputeRecommendationRequest, persist?: boolean, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'instance' is not null or undefined
             assertParamExists('v1RecommendationsComputePost', 'instance', instance)
             const localVarPath = `/v1/recommendations/compute`;
@@ -5347,6 +5744,10 @@ export const RecommendationsApiAxiosParamCreator = function (configuration?: Con
 
             // authentication BearerAuth required
             await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            if (persist !== undefined) {
+                localVarQueryParameter['persist'] = persist;
+            }
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
             localVarHeaderParameter['Accept'] = 'application/json';
@@ -5402,6 +5803,47 @@ export const RecommendationsApiAxiosParamCreator = function (configuration?: Con
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Prices the given CI jobs on every runner provider that fits the shape, using each provider\'s own billing granularity (per-minute round-up, per-second, minimums), plus self-hosted compute when self_hosted names a cloud and region. Results are cheapest first. Flags explain caveats such as self-hosted runners on public repositories or savings that need per-job durations to count.
+         * @summary Find cheaper CI runners
+         * @param {RunnerRecommendationRequest} request Jobs to price
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1RecommendationsRunnerPost: async (request: RunnerRecommendationRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'request' is not null or undefined
+            assertParamExists('v1RecommendationsRunnerPost', 'request', request)
+            const localVarPath = `/v1/recommendations/runner`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "X-API-Key", configuration)
+
+            // authentication BearerAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Authorization", configuration)
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(request, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -5415,11 +5857,12 @@ export const RecommendationsApiFp = function(configuration?: Configuration) {
          * Return the cheapest machine per provider that still meets the requested shape, with the saving against the machine you asked about.
          * @summary Find cheaper machines
          * @param {ComputeRecommendationRequest} instance Machine to improve on
+         * @param {boolean} [persist] Save a price computed for a shape the catalogue does not list. Defaults to true; false returns the same recommendations without saving.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async v1RecommendationsComputePost(instance: ComputeRecommendationRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<ComputeRecommendation>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1RecommendationsComputePost(instance, options);
+        async v1RecommendationsComputePost(instance: ComputeRecommendationRequest, persist?: boolean, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<ComputeRecommendation>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1RecommendationsComputePost(instance, persist, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['RecommendationsApi.v1RecommendationsComputePost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -5435,6 +5878,19 @@ export const RecommendationsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.v1RecommendationsDisksPost(instance, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['RecommendationsApi.v1RecommendationsDisksPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Prices the given CI jobs on every runner provider that fits the shape, using each provider\'s own billing granularity (per-minute round-up, per-second, minimums), plus self-hosted compute when self_hosted names a cloud and region. Results are cheapest first. Flags explain caveats such as self-hosted runners on public repositories or savings that need per-job durations to count.
+         * @summary Find cheaper CI runners
+         * @param {RunnerRecommendationRequest} request Jobs to price
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async v1RecommendationsRunnerPost(request: RunnerRecommendationRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<RunnerRecommendation>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.v1RecommendationsRunnerPost(request, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RecommendationsApi.v1RecommendationsRunnerPost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
@@ -5454,7 +5910,7 @@ export const RecommendationsApiFactory = function (configuration?: Configuration
          * @throws {RequiredError}
          */
         v1RecommendationsComputePost(requestParameters: RecommendationsApiV1RecommendationsComputePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<ComputeRecommendation>> {
-            return localVarFp.v1RecommendationsComputePost(requestParameters.instance, options).then((request) => request(axios, basePath));
+            return localVarFp.v1RecommendationsComputePost(requestParameters.instance, requestParameters.persist, options).then((request) => request(axios, basePath));
         },
         /**
          * Return the cheapest volume per provider that still meets the requested capacity and performance, with the saving against the volume you asked about.
@@ -5465,6 +5921,16 @@ export const RecommendationsApiFactory = function (configuration?: Configuration
          */
         v1RecommendationsDisksPost(requestParameters: RecommendationsApiV1RecommendationsDisksPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DiskRecommendation>> {
             return localVarFp.v1RecommendationsDisksPost(requestParameters.instance, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Prices the given CI jobs on every runner provider that fits the shape, using each provider\'s own billing granularity (per-minute round-up, per-second, minimums), plus self-hosted compute when self_hosted names a cloud and region. Results are cheapest first. Flags explain caveats such as self-hosted runners on public repositories or savings that need per-job durations to count.
+         * @summary Find cheaper CI runners
+         * @param {RecommendationsApiV1RecommendationsRunnerPostRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        v1RecommendationsRunnerPost(requestParameters: RecommendationsApiV1RecommendationsRunnerPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<RunnerRecommendation>> {
+            return localVarFp.v1RecommendationsRunnerPost(requestParameters.request, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -5491,6 +5957,15 @@ export interface RecommendationsApiInterface {
      */
     v1RecommendationsDisksPost(requestParameters: RecommendationsApiV1RecommendationsDisksPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<DiskRecommendation>>;
 
+    /**
+     * Prices the given CI jobs on every runner provider that fits the shape, using each provider\'s own billing granularity (per-minute round-up, per-second, minimums), plus self-hosted compute when self_hosted names a cloud and region. Results are cheapest first. Flags explain caveats such as self-hosted runners on public repositories or savings that need per-job durations to count.
+     * @summary Find cheaper CI runners
+     * @param {RecommendationsApiV1RecommendationsRunnerPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    v1RecommendationsRunnerPost(requestParameters: RecommendationsApiV1RecommendationsRunnerPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<Array<RunnerRecommendation>>;
+
 }
 
 /**
@@ -5501,6 +5976,11 @@ export interface RecommendationsApiV1RecommendationsComputePostRequest {
      * Machine to improve on
      */
     readonly instance: ComputeRecommendationRequest
+
+    /**
+     * Save a price computed for a shape the catalogue does not list. Defaults to true; false returns the same recommendations without saving.
+     */
+    readonly persist?: boolean
 }
 
 /**
@@ -5511,6 +5991,16 @@ export interface RecommendationsApiV1RecommendationsDisksPostRequest {
      * Volume to improve on
      */
     readonly instance: DiskRecommendationRequest
+}
+
+/**
+ * Request parameters for v1RecommendationsRunnerPost operation in RecommendationsApi.
+ */
+export interface RecommendationsApiV1RecommendationsRunnerPostRequest {
+    /**
+     * Jobs to price
+     */
+    readonly request: RunnerRecommendationRequest
 }
 
 /**
@@ -5525,7 +6015,7 @@ export class RecommendationsApi extends BaseAPI implements RecommendationsApiInt
      * @throws {RequiredError}
      */
     public v1RecommendationsComputePost(requestParameters: RecommendationsApiV1RecommendationsComputePostRequest, options?: RawAxiosRequestConfig) {
-        return RecommendationsApiFp(this.configuration).v1RecommendationsComputePost(requestParameters.instance, options).then((request) => request(this.axios, this.basePath));
+        return RecommendationsApiFp(this.configuration).v1RecommendationsComputePost(requestParameters.instance, requestParameters.persist, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -5537,6 +6027,17 @@ export class RecommendationsApi extends BaseAPI implements RecommendationsApiInt
      */
     public v1RecommendationsDisksPost(requestParameters: RecommendationsApiV1RecommendationsDisksPostRequest, options?: RawAxiosRequestConfig) {
         return RecommendationsApiFp(this.configuration).v1RecommendationsDisksPost(requestParameters.instance, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Prices the given CI jobs on every runner provider that fits the shape, using each provider\'s own billing granularity (per-minute round-up, per-second, minimums), plus self-hosted compute when self_hosted names a cloud and region. Results are cheapest first. Flags explain caveats such as self-hosted runners on public repositories or savings that need per-job durations to count.
+     * @summary Find cheaper CI runners
+     * @param {RecommendationsApiV1RecommendationsRunnerPostRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public v1RecommendationsRunnerPost(requestParameters: RecommendationsApiV1RecommendationsRunnerPostRequest, options?: RawAxiosRequestConfig) {
+        return RecommendationsApiFp(this.configuration).v1RecommendationsRunnerPost(requestParameters.request, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

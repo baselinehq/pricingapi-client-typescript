@@ -6,6 +6,7 @@ api.ts
 base.ts
 common.ts
 configuration.ts
+docs/AffectedResource.md
 docs/ComputePrice.md
 docs/ComputePriceList.md
 docs/ComputePricePage.md
@@ -52,9 +53,15 @@ docs/RegisteredDatabasePrices.md
 docs/RegisteredDiskPrices.md
 docs/RegisteredModelPrices.md
 docs/RegistrationStatus.md
+docs/RunnerRecommendation.md
+docs/RunnerRecommendationRequest.md
 docs/ServiceApi.md
 docs/TypesDisk.md
 docs/TypesPredicates.md
+docs/TypesRunnerCurrent.md
+docs/TypesRunnerPlanFee.md
+docs/TypesRunnerSelfHosted.md
+docs/TypesRunnerShape.md
 docs/TypesSavings.md
 docs/TypesService.md
 git_push.sh

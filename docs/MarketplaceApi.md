@@ -99,7 +99,7 @@ const { status, data } = await apiInstance.v1MarketplaceComputeGet(
 # **v1MarketplaceComputeIdDelete**
 > v1MarketplaceComputeIdDelete()
 
-Delete a compute price you have published, by its id. Usage still pinned to it stops resolving a price, so re-pin before deleting.
+Delete a compute price you have published, by its id. A price that is still assigned cannot be deleted; the response lists what uses it so you can unassign it first.
 
 ### Example
 
@@ -147,6 +147,7 @@ void (empty response body)
 |**401** | Unauthorized |  -  |
 |**403** | Forbidden |  -  |
 |**404** | Not Found |  -  |
+|**409** | Conflict |  -  |
 |**422** | Unprocessable Entity |  -  |
 |**500** | Internal Server Error |  -  |
 
@@ -211,7 +212,7 @@ const { status, data } = await apiInstance.v1MarketplaceComputeIdGet(
 # **v1MarketplaceComputeIdPatch**
 > ComputePrice v1MarketplaceComputeIdPatch(body)
 
-Change the rate or the descriptive fields of a compute price you have published. Send only the fields you want to change. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
+Change the rate or the descriptive fields of a compute price you have published. Send only the fields you want to change. Changing `cost_per_hour` re-derives the per-resource rates, changing a rate re-derives `cost_per_hour`, and sending both requires them to agree within 0.1%. Changing only the size keeps `cost_per_hour` and re-splits the rates; changing only the GPU fields keeps the cpu and memory rates and re-derives `cost_per_hour`. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
 
 ### Example
 
@@ -271,7 +272,7 @@ const { status, data } = await apiInstance.v1MarketplaceComputeIdPatch(
 # **v1MarketplaceComputePost**
 > PublishedComputePrices v1MarketplaceComputePost(body)
 
-Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag.
+Register your own compute rates so CostGraph can price machines it has no public price for, such as bare metal or a private cloud. Send either `cost_per_hour` or the per-resource rates (`cpu_cores_cost_per_hour`, `ram_gb_cost_per_hour`, `gpu_cost_per_hour`) and the other is derived; send both and they must agree within 0.1%. GPU cost is taken out of `cost_per_hour` before the rest is split across cpu and memory. A `cost_per_hour` of 0, or cpu and memory rates that are both 0, count as not sent. `service`, `region`, `cpu_cores`, `ram_gb` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, instance type, operating system and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. Changing any key field mints a new id, because it describes a different SKU. The returned id is what you attach to a resource with the `costgraph.ai/pricing-id.compute` label or tag.
 
 ### Example
 
@@ -516,7 +517,7 @@ const { status, data } = await apiInstance.v1MarketplaceDatabasesIdGet(
 # **v1MarketplaceDatabasesIdPatch**
 > DatabasePrice v1MarketplaceDatabasesIdPatch(body)
 
-Change the rate or the descriptive fields of a database price you have published. Send only the fields you want to change. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
+Change the rate or the descriptive fields of a database price you have published. Send only the fields you want to change. Changing `cost_per_hour` re-derives the per-resource rates, changing a rate re-derives `cost_per_hour`, and sending both requires them to agree within 0.1%. Changing only the size keeps `cost_per_hour` and re-splits the rates. Sending null clears an optional database price field; a database left with no price at all is rejected. The fields that identify the price cannot be changed, because they describe a different SKU; delete the price and register a new one instead.
 
 ### Example
 
@@ -576,7 +577,7 @@ const { status, data } = await apiInstance.v1MarketplaceDatabasesIdPatch(
 # **v1MarketplaceDatabasesPost**
 > PublishedDatabasePrices v1MarketplaceDatabasesPost(body)
 
-Register your own managed database rates so CostGraph can price clusters it has no public price for. An entry is upserted on its natural key (provider, service, region, engine, edition, instance type and usage type), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a database with the `costgraph.ai/pricing-id.database` label or tag.
+Register your own managed database rates so CostGraph can price clusters it has no public price for. Send either `cost_per_hour` or the cpu and memory rates and the other is derived; send both and they must agree within 0.1%. A database without `cpu_cores` or `ram_gb`, such as a serverless one, needs no rates and only at least one price of any kind. `service`, `region`, `engine` and `period_billing_hours` (1 for an hourly price) are required. An entry is upserted on its natural key (provider, service, region, engine, edition, instance type and usage type), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a database with the `costgraph.ai/pricing-id.database` label or tag.
 
 ### Example
 
@@ -703,7 +704,7 @@ const { status, data } = await apiInstance.v1MarketplaceDisksGet(
 # **v1MarketplaceDisksIdDelete**
 > v1MarketplaceDisksIdDelete()
 
-Delete a disk price you have published, by its id. Usage still pinned to it stops resolving a price, so re-pin before deleting.
+Delete a disk price you have published, by its id. A price that is still assigned cannot be deleted; the response lists what uses it so you can unassign it first.
 
 ### Example
 
@@ -751,6 +752,7 @@ void (empty response body)
 |**401** | Unauthorized |  -  |
 |**403** | Forbidden |  -  |
 |**404** | Not Found |  -  |
+|**409** | Conflict |  -  |
 |**422** | Unprocessable Entity |  -  |
 |**500** | Internal Server Error |  -  |
 
@@ -875,7 +877,7 @@ const { status, data } = await apiInstance.v1MarketplaceDisksIdPatch(
 # **v1MarketplaceDisksPost**
 > PublishedDiskPrices v1MarketplaceDisksPost(body)
 
-Register your own block storage rates so CostGraph can price volumes it has no public price for. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, type and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a volume with the `costgraph.ai/pricing-id.disk` label or tag.
+Register your own block storage rates so CostGraph can price volumes it has no public price for. An entry is upserted on its natural key (provider, service, region, availability zone, usage type, type and period billing hours), so re-posting the same entry with a new cost keeps its id and reprices everything already using it. The returned id is what you attach to a volume with the `costgraph.ai/pricing-id.storage` label or tag.
 
 ### Example
 
@@ -1003,7 +1005,7 @@ let cursor: string; //Cursor from the previous page (optional) (default to undef
 let model: string; //Filter by model (optional) (default to undefined)
 let provider: string; //Filter by model provider (optional) (default to undefined)
 let region: string; //Filter by region (optional) (default to undefined)
-let tokenBucket: string; //Filter by token bucket (optional) (default to undefined)
+let tokenBucket: 'input' | 'output' | 'cache_read' | 'cache_write'; //Filter by token bucket. Every bucket is priced separately, so a model has one price per bucket (optional) (default to undefined)
 
 const { status, data } = await apiInstance.v1MarketplaceModelsGet(
     limit,
@@ -1024,7 +1026,7 @@ const { status, data } = await apiInstance.v1MarketplaceModelsGet(
 | **model** | [**string**] | Filter by model | (optional) defaults to undefined|
 | **provider** | [**string**] | Filter by model provider | (optional) defaults to undefined|
 | **region** | [**string**] | Filter by region | (optional) defaults to undefined|
-| **tokenBucket** | [**string**] | Filter by token bucket | (optional) defaults to undefined|
+| **tokenBucket** | [**&#39;input&#39; | &#39;output&#39; | &#39;cache_read&#39; | &#39;cache_write&#39;**]**Array<&#39;input&#39; &#124; &#39;output&#39; &#124; &#39;cache_read&#39; &#124; &#39;cache_write&#39;>** | Filter by token bucket. Every bucket is priced separately, so a model has one price per bucket | (optional) defaults to undefined|
 
 
 ### Return type
@@ -1227,7 +1229,7 @@ const { status, data } = await apiInstance.v1MarketplaceModelsIdPatch(
 # **v1MarketplaceModelsPost**
 > PublishedModelPrices v1MarketplaceModelsPost(body)
 
-Register your own token rates for models you host, so CostGraph can price calls it has no public rate for. Entries are versioned: a price change closes the current row and opens a new one, so spend already recorded keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change.
+Register your own token rates for models you host, so CostGraph can price calls it has no public rate for. Every token bucket is priced separately, so publish one price per bucket you charge for - `input`, `output`, `cache_read`, `cache_write` - each with its own `unit_price_per_mtok`. A bucket you do not publish has no rate, and usage in it resolves to no price rather than to zero. `token_bucket` identifies the price alongside the model, host and region, so it cannot be patched later: delete the price and publish a new one to move a rate to another bucket. Entries are versioned: a price change closes the current row and opens a new one, so spend already recorded keeps the rate it was billed at. The returned id is what you attach with the `costgraph.ai/pricing-id.model` label or tag. Each version carries its own id, so read the live entry back after a price change.
 
 ### Example
 
