@@ -16,8 +16,25 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  route:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      runners: ${{ steps.route.outputs.runners }}
+    steps:
+      - id: route
+        uses: baselinehq/costgraph-action/route@v0
+        with:
+          default: blacksmith-4vcpu-ubuntu-2404
+          release: true
+
   release:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: [route]
+    if: ${{ !cancelled() }}
+    runs-on: ${{ fromJSON(needs.route.outputs.runners || '{}').release || 'blacksmith-4vcpu-ubuntu-2404' }}
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
     steps:
@@ -29,9 +46,9 @@ jobs:
           manifest-file: .release-please-manifest.json
 
   publish:
-    needs: release
-    if: needs.release.outputs.release_created == 'true'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: [route, release]
+    if: ${{ !cancelled() && needs.release.result == 'success' && (needs.release.outputs.release_created == 'true') }}
+    runs-on: ${{ fromJSON(needs.route.outputs.runners || '{}').publish || 'blacksmith-4vcpu-ubuntu-2404' }}
     permissions:
       contents: read
       packages: write
